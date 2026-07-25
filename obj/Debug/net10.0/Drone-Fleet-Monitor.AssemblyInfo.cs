@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Drone-Fleet-Monitor")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+fa07cb1b04908ea3a33507e9f22cbd3a9819c432")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+59fd798eab24bc5bab782938fcfd93c008edd586")]
 [assembly: System.Reflection.AssemblyProductAttribute("Drone-Fleet-Monitor")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Drone-Fleet-Monitor")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -7,7 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
-builder.Services.AddSingleton<DroneManager>();
+builder.Services.AddScoped<DroneManager>();
 builder.Services.AddDbContext<DroneContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -19,55 +19,90 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-app.MapGet("/api/drones", (DroneManager manager) =>
+app.MapGet("/api/drones", (DroneContext context) =>
 {
-    return manager.GetAllDrones();
+    var drones = context.Drones.ToList();
+    return Results.Ok(drones);
 });
 
-app.MapGet("/api/drones/civilian", (DroneManager manager) =>
+app.MapGet("/api/drones/civilian", (DroneContext context) =>
 {
-    return manager.GetAllCivilianDrones();
+    var civilianDrones = context.Drones
+        .AsEnumerable()
+        .OfType<CivilianDrone>()
+        .ToList();
+
+    return Results.Ok(civilianDrones);
 });
 
-app.MapGet("/api/drones/military", (DroneManager manager) =>
+app.MapGet("/api/drones/military", (DroneContext context) =>
 {
-    return manager.GetAllMilitaryDrones();
+    var militaryDrones = context.Drones
+        .AsEnumerable()
+        .OfType<MilitaryDrone>()
+        .ToList();
+
+    return Results.Ok(militaryDrones);
 });
 
-app.MapPost("/api/drones/add", (string type, DroneManager manager) =>
+app.MapPost("/api/drones/add", (string type, DroneContext context) =>
 {
-    try
+    BaseDrone newDrone;
+    switch (type.ToLower())
     {
-        manager.AddDrone(type);
-        return Results.Ok($"Drona de tip '{type}' a fost adăugată cu succes!");
+        case "delivery":
+            newDrone = new DeliveryDrone();
+            break;
+
+        case "survey":
+            newDrone = new SurveyDrone();
+
+            break;
+
+        case "recon":
+            newDrone = new ReconDrone();
+            break;
+
+        case "combat":
+            newDrone = new CombatDrone();
+            break;
+
+        default:
+            throw new ArgumentException("Unknown Drone!");
     }
-    catch (ArgumentException ex)
-    {
-        return Results.BadRequest(ex.Message);
-    }
+
+    context.Drones.Add(newDrone);
+    context.SaveChanges();
+
+    return newDrone;
 });
 
-app.MapGet("/api/drones/{id}", (int id, DroneManager manager) =>
+app.MapGet("/api/drones/{id}", (int id, DroneContext context) =>
 {
-    var drone = manager.SearchById(id);
+    var drone = context.Drones.FirstOrDefault(d => d.Id == id);
 
-    if (drone == null)
+    if (drone != null)
     {
-        return Results.NotFound($"Drona cu ID-ul {id} nu a fost găsită.");
+        return Results.Ok(drone);
+
     }
 
-    return Results.Ok(drone);
+    return Results.NotFound($"Drona cu ID-ul {id} nu a fost găsită.");
 });
 
-app.MapDelete("/api/drones/{id}", (int id, DroneManager manager) =>
+app.MapDelete("/api/drones/{id}", (int id, DroneContext context) =>
 {
-    var drone = manager.DeleteDrone(id);
+    var drone = context.Drones.FirstOrDefault(d => d.Id == id);
 
-    if (drone == null)
+    if (drone != null)
     {
-        return Results.NotFound($"Drona cu ID-ul {id} nu a fost găsită.");
+        context.Drones.Remove(drone);
+        context.SaveChanges();
+        return Results.Ok(drone);
+
     }
-    return Results.Ok(drone);
+
+    return Results.NotFound($"Drona cu ID-ul {id} nu a fost găsită.");
 });
 
 app.Run();

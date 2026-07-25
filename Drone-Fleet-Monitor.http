@@ -26,8 +26,8 @@ POST {{Drone_Fleet_Monitor_HostAddress}}/api/drones/add?type=combat
 
 ###
 
-GET {{Drone_Fleet_Monitor_HostAddress}}/api/drones/22
+GET {{Drone_Fleet_Monitor_HostAddress}}/api/drones/2
 Accept: application/json
 
 ###
-DELETE {{Drone_Fleet_Monitor_HostAddress}}/api/drones/2
+DELETE {{Drone_Fleet_Monitor_HostAddress}}/api/drones/3
