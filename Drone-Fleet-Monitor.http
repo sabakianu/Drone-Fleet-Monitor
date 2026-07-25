@@ -1,0 +1,33 @@
+@Drone_Fleet_Monitor_HostAddress = http://localhost:5229
+
+GET {{Drone_Fleet_Monitor_HostAddress}}/api/drones
+Accept: application/json
+
+###
+GET {{Drone_Fleet_Monitor_HostAddress}}/api/drones/civilian
+Accept: application/json
+
+###
+GET {{Drone_Fleet_Monitor_HostAddress}}/api/drones/military
+Accept: application/json
+
+###
+
+POST {{Drone_Fleet_Monitor_HostAddress}}/api/drones/add?type=delivery
+
+###
+POST {{Drone_Fleet_Monitor_HostAddress}}/api/drones/add?type=survey
+
+###
+POST {{Drone_Fleet_Monitor_HostAddress}}/api/drones/add?type=recon
+
+###
+POST {{Drone_Fleet_Monitor_HostAddress}}/api/drones/add?type=combat
+
+###
+
+GET {{Drone_Fleet_Monitor_HostAddress}}/api/drones/22
+Accept: application/json
+
+###
+DELETE {{Drone_Fleet_Monitor_HostAddress}}/api/drones/2
