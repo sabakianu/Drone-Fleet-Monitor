@@ -1,4 +1,4 @@
-@Drone_Fleet_Monitor_HostAddress = http://localhost:5229
+@Drone_Fleet_Monitor_HostAddress = http://localhost:8080
 
 GET {{Drone_Fleet_Monitor_HostAddress}}/api/drones
 Accept: application/json

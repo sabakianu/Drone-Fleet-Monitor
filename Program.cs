@@ -105,5 +105,12 @@ app.MapDelete("/api/drones/{id}", (int id, DroneContext context) =>
     return Results.NotFound($"Drona cu ID-ul {id} nu a fost găsită.");
 });
 
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<DroneContext>();
+    db.Database.Migrate();
+}
+
 app.Run();
 
