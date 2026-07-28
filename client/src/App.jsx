@@ -4,13 +4,8 @@ import ThreeGlobe from "three-globe";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import * as topojson from "topojson-client";
 
-function createCamera() {
-  const camera = new THREE.PerspectiveCamera(
-    75,
-    window.innerWidth / window.innerHeight,
-    0.1,
-    1000,
-  );
+function createCamera(width, height) {
+  const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
 
   camera.position.z = 200;
 
@@ -28,16 +23,53 @@ function createControls(camera, renderer) {
   return controls;
 }
 
-function createRenderer() {
+function createRenderer(width, height) {
   const renderer = new THREE.WebGLRenderer({
     antialias: true,
   });
 
-  renderer.setSize(window.innerWidth, window.innerHeight);
-
+  renderer.setSize(width, height);
+  renderer.domElement.style.width = "100%";
+  renderer.domElement.style.height = "100%";
+  renderer.domElement.style.display = "block";
   return renderer;
 }
-// Animație
+
+function setupResize(camera, renderer) {
+  let currentGlobe = null;
+
+  const handleResize = () => {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    camera.aspect = width / height;
+    camera.updateProjectionMatrix();
+
+    renderer.setSize(width, height, false);
+
+    const aspect = width / height;
+
+    const baseScale = 0.85;
+
+    const scaleFactor = aspect < 1 ? aspect * baseScale : baseScale;
+
+    if (currentGlobe) {
+      currentGlobe.scale.set(scaleFactor, scaleFactor, scaleFactor);
+    }
+  };
+
+  window.addEventListener("resize", handleResize);
+  handleResize();
+
+  return {
+    cleanup: () => window.removeEventListener("resize", handleResize),
+    setGlobe: (globeInstance) => {
+      currentGlobe = globeInstance;
+      handleResize();
+    },
+  };
+}
+
 function animate(renderer, controls, scene, camera) {
   function loop() {
     requestAnimationFrame(loop);
@@ -126,39 +158,48 @@ export default function App() {
   const mountRef = useRef(null);
 
   useEffect(() => {
+    if (mountRef.current) {
+      mountRef.current.innerHTML = "";
+    }
+
+    const width = mountRef.current.clientWidth || window.innerWidth;
+    const height = mountRef.current.clientHeight || window.innerHeight;
+
     const scene = new THREE.Scene();
     scene.background = new THREE.Color("#f5f5f5");
-
-    const camera = createCamera();
-    const renderer = createRenderer();
+    const camera = createCamera(width, height);
+    const renderer = createRenderer(width, height);
 
     mountRef.current.appendChild(renderer.domElement);
 
     renderer.render(scene, camera);
 
-    // Controale
     const controls = createControls(camera, renderer);
-
-    controls.minDistance = 120;
-    controls.maxDistance = 230;
-    controls.enableRotate = false;
-    controls.enablePan = false;
-    controls.zoomSpeed = 1.5;
+    const resizeManager = setupResize(camera, renderer);
 
     animate(renderer, controls, scene, camera);
 
     setupGlobeScene(mountRef, scene).then((globe) => {
       setupGlobeRotation(globe, renderer);
+      resizeManager.setGlobe(globe);
     });
+
+    return () => {
+      resizeManager.cleanup();
+      if (
+        mountRef.current &&
+        renderer.domElement &&
+        mountRef.current.contains(renderer.domElement)
+      ) {
+        mountRef.current.removeChild(renderer.domElement);
+      }
+      renderer.dispose();
+    };
   }, []);
 
   return (
-    <div
-      ref={mountRef}
-      style={{
-        width: "100vw",
-        height: "100vh",
-      }}
-    />
+    <div className="flex w-screen h-screen overflow-hidden">
+      <div ref={mountRef} className="w-full h-full" />
+    </div>
   );
 }
