@@ -3,6 +3,65 @@ import * as THREE from "three";
 import ThreeGlobe from "three-globe";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import * as topojson from "topojson-client";
+import droneIcon from "./assets/Drone.png";
+
+function spawnDrone(globe, lat, lng, alt, dronesArray) {
+  const textureLoader = new THREE.TextureLoader();
+  const texture = textureLoader.load(droneIcon);
+
+  const material = new THREE.SpriteMaterial({
+    map: texture,
+    transparent: true,
+    color: "#ffffff",
+  });
+
+  const sprite = new THREE.Sprite(material);
+  sprite.scale.set(3, 3, 1);
+
+  const coords = globe.getCoords(lat, lng, alt);
+  sprite.position.set(coords.x, coords.y, coords.z);
+
+  globe.add(sprite);
+  dronesArray.push(sprite);
+
+  return sprite;
+}
+
+function setupHover(camera, renderer, dronesArray) {
+  const raycaster = new THREE.Raycaster();
+  const mouse = new THREE.Vector2();
+  let hoveredDrone = null;
+
+  const handlePointerMove = (event) => {
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+  };
+
+  window.addEventListener("pointermove", handlePointerMove);
+
+  const updateHover = () => {
+    raycaster.setFromCamera(mouse, camera);
+
+    const intersects = raycaster.intersectObjects(dronesArray);
+
+    if (hoveredDrone) {
+      hoveredDrone.scale.set(3, 3, 1);
+      renderer.domElement.style.cursor = "default";
+      hoveredDrone = null;
+    }
+
+    if (intersects.length > 0) {
+      hoveredDrone = intersects[0].object;
+      hoveredDrone.scale.set(3.5, 3.5, 1);
+      renderer.domElement.style.cursor = "pointer";
+    }
+  };
+
+  return {
+    updateHover,
+    cleanup: () => window.removeEventListener("pointermove", handlePointerMove),
+  };
+}
 
 function createCamera(width, height) {
   const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
@@ -70,16 +129,19 @@ function setupResize(camera, renderer) {
   };
 }
 
-function animate(renderer, controls, scene, camera) {
+function animate(renderer, controls, scene, camera, onFrame) {
+  let frameId;
   function loop() {
-    requestAnimationFrame(loop);
-
+    frameId = requestAnimationFrame(loop);
     controls.update();
+
+    if (onFrame) onFrame();
 
     renderer.render(scene, camera);
   }
-
   loop();
+
+  return () => cancelAnimationFrame(frameId);
 }
 
 async function getCountries() {
@@ -177,15 +239,28 @@ export default function App() {
     const controls = createControls(camera, renderer);
     const resizeManager = setupResize(camera, renderer);
 
-    animate(renderer, controls, scene, camera);
+    const activeDrones = [];
+    const hoverManager = setupHover(camera, renderer, activeDrones);
+    const stopAnimation = animate(
+      renderer,
+      controls,
+      scene,
+      camera,
+      hoverManager.updateHover,
+    );
 
     setupGlobeScene(mountRef, scene).then((globe) => {
       setupGlobeRotation(globe, renderer);
       resizeManager.setGlobe(globe);
+      spawnDrone(globe, 45.9432, 24.9668, 0.05, activeDrones); // ro
+      spawnDrone(globe, 40.7128, -74.006, 0.05, activeDrones); // ny
     });
 
     return () => {
+      stopAnimation();
       resizeManager.cleanup();
+      hoverManager.cleanup();
+
       if (
         mountRef.current &&
         renderer.domElement &&
