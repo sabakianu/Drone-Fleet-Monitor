@@ -12,9 +12,20 @@ function createCamera() {
     1000,
   );
 
-  camera.position.z = 5;
+  camera.position.z = 200;
 
   return camera;
+}
+function createControls(camera, renderer) {
+  const controls = new OrbitControls(camera, renderer.domElement);
+
+  controls.minDistance = 120;
+  controls.maxDistance = 230;
+  controls.enableRotate = false;
+  controls.enablePan = false;
+  controls.zoomSpeed = 1.5;
+
+  return controls;
 }
 
 function createRenderer() {
@@ -66,11 +77,42 @@ function createGlobe(countries) {
     .polygonStrokeColor(() => "#ffffff")
     .polygonAltitude(0.01);
 
-  globe.position.set(0, 0, -170);
+  globe.position.set(0, 0, 0);
   return globe;
 }
 
-async function start(mountRef, scene) {
+function setupGlobeRotation(globe, renderer) {
+  let isDragging = false;
+  let previousX = 0;
+  let previousY = 0;
+
+  renderer.domElement.addEventListener("pointerdown", (event) => {
+    if (event.button === 0) {
+      isDragging = true;
+      previousX = event.clientX;
+      previousY = event.clientY;
+    }
+  });
+
+  renderer.domElement.addEventListener("pointermove", (event) => {
+    if (!isDragging) return;
+
+    const deltaX = event.clientX - previousX;
+    const deltaY = event.clientY - previousY;
+
+    globe.rotation.y += deltaX * 0.005;
+    globe.rotation.x += deltaY * 0.005;
+
+    previousX = event.clientX;
+    previousY = event.clientY;
+  });
+
+  renderer.domElement.addEventListener("pointerup", () => {
+    isDragging = false;
+  });
+}
+
+async function setupGlobeScene(mountRef, scene) {
   const countries = await getCountries();
 
   const globe = createGlobe(countries);
@@ -95,42 +137,18 @@ export default function App() {
     renderer.render(scene, camera);
 
     // Controale
-    const controls = new OrbitControls(camera, renderer.domElement);
+    const controls = createControls(camera, renderer);
 
-    controls.minDistance = 3;
-    controls.maxDistance = 20;
+    controls.minDistance = 120;
+    controls.maxDistance = 230;
     controls.enableRotate = false;
-
-    let isDragging = false;
-    let previousX = 0;
-    let previousY = 0;
+    controls.enablePan = false;
+    controls.zoomSpeed = 1.5;
 
     animate(renderer, controls, scene, camera);
-    start(mountRef, scene).then((globe) => {
-      renderer.domElement.addEventListener("pointerdown", (event) => {
-        if (event.button === 0) {
-          isDragging = true;
-          previousX = event.clientX;
-          previousY = event.clientY;
-        }
-      });
 
-      renderer.domElement.addEventListener("pointermove", (event) => {
-        if (!isDragging) return;
-
-        const deltaX = event.clientX - previousX;
-        const deltaY = event.clientY - previousY;
-
-        globe.rotation.y += deltaX * 0.005;
-        globe.rotation.x += deltaY * 0.005;
-
-        previousX = event.clientX;
-        previousY = event.clientY;
-      });
-
-      renderer.domElement.addEventListener("pointerup", () => {
-        isDragging = false;
-      });
+    setupGlobeScene(mountRef, scene).then((globe) => {
+      setupGlobeRotation(globe, renderer);
     });
   }, []);
 
