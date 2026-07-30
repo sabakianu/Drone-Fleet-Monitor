@@ -279,7 +279,7 @@ export default function App() {
       camera,
       renderer,
       activeDrones,
-      (dronaLovita) => {
+      (currentDrone) => {
         setIsPanelOpen(true);
       },
     );
