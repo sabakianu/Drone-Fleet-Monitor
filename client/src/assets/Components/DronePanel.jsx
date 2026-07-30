@@ -44,7 +44,7 @@ export default function DronePanel({ onClose }) {
         <p className="text-lg font-bold text-slate-900">Battery: 67%</p>
       </div>
 
-      {/* alocatie */}
+      {/* locatie */}
       <div className="flex flex-col gap-3 mb-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
@@ -91,7 +91,7 @@ export default function DronePanel({ onClose }) {
               Horiz: <span className="font-bold text-slate-800">45 km/h</span>{" "}
               <span className="text-xs text-slate-500">(max 120)</span>
             </p>
-            <div className="w-[1px] h-3 bg-slate-300"></div>
+            <div className="w-px h-3 bg-slate-300"></div>
             <p>
               Vert: <span className="font-bold text-slate-800">2 m/s</span>{" "}
               <span className="text-xs text-slate-500">(max 15)</span>

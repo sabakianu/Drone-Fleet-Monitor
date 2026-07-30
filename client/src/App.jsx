@@ -4,9 +4,11 @@ import ThreeGlobe from "three-globe";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import * as topojson from "topojson-client";
 import droneIcon from "./assets/Drone.png";
+import baseIcon from "./assets/DroneBase.png";
 import DronePanel from "./assets/Components/DronePanel.jsx";
+import BasePanel from "./assets/Components/BasePanel.jsx";
 
-function spawnDrone(globe, lat, lng, alt, dronesArray) {
+function spawnDrone(globe, lat, lng, alt, objectsArray) {
   const textureLoader = new THREE.TextureLoader();
   const texture = textureLoader.load(droneIcon);
 
@@ -22,16 +24,53 @@ function spawnDrone(globe, lat, lng, alt, dronesArray) {
   const coords = globe.getCoords(lat, lng, alt);
   sprite.position.set(coords.x, coords.y, coords.z);
 
+  sprite.userData = {
+    type: "drone",
+    name: "Reaper",
+    baseScale: 3,
+    hoverScale: 3.5,
+  };
   globe.add(sprite);
-  dronesArray.push(sprite);
+  objectsArray.push(sprite);
 
   return sprite;
 }
 
-function setupHover(camera, renderer, dronesArray) {
+function spawnBase(globe, lat, lng, objectsArray) {
+  const textureLoader = new THREE.TextureLoader();
+  const texture = textureLoader.load(baseIcon);
+
+  const material = new THREE.MeshBasicMaterial({
+    map: texture,
+    transparent: true,
+    color: "#ffffff",
+    side: THREE.DoubleSide,
+  });
+
+  const geometry = new THREE.PlaneGeometry(3, 3);
+  const baseMesh = new THREE.Mesh(geometry, material);
+
+  const coords = globe.getCoords(lat, lng, 0.01);
+  baseMesh.position.set(coords.x, coords.y, coords.z);
+
+  baseMesh.lookAt(0, 0, 0);
+
+  baseMesh.userData = {
+    type: "base",
+    name: "Baza Militară",
+    baseScale: 1,
+    hoverScale: 1.2,
+  };
+  globe.add(baseMesh);
+  objectsArray.push(baseMesh);
+
+  return baseMesh;
+}
+
+function setupHover(camera, renderer, objectsArray) {
   const raycaster = new THREE.Raycaster();
   const mouse = new THREE.Vector2();
-  let hoveredDrone = null;
+  let hoveredObject = null;
 
   const handlePointerMove = (event) => {
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
@@ -43,17 +82,25 @@ function setupHover(camera, renderer, dronesArray) {
   const updateHover = () => {
     raycaster.setFromCamera(mouse, camera);
 
-    const intersects = raycaster.intersectObjects(dronesArray);
+    const intersects = raycaster.intersectObjects(objectsArray);
 
-    if (hoveredDrone) {
-      hoveredDrone.scale.set(3, 3, 1);
+    if (hoveredObject) {
+      hoveredObject.scale.set(
+        hoveredObject.userData.baseScale,
+        hoveredObject.userData.baseScale,
+        1,
+      );
       renderer.domElement.style.cursor = "default";
-      hoveredDrone = null;
+      hoveredObject = null;
     }
 
     if (intersects.length > 0) {
-      hoveredDrone = intersects[0].object;
-      hoveredDrone.scale.set(3.5, 3.5, 1);
+      hoveredObject = intersects[0].object;
+      hoveredObject.scale.set(
+        hoveredObject.userData.hoverScale,
+        hoveredObject.userData.hoverScale,
+        1,
+      );
       renderer.domElement.style.cursor = "pointer";
     }
   };
@@ -64,7 +111,7 @@ function setupHover(camera, renderer, dronesArray) {
   };
 }
 
-export function setupClick(camera, renderer, activeDrones, onDroneClicked) {
+export function setupClick(camera, renderer, activeObjects, onObjectClicked) {
   const raycaster = new THREE.Raycaster();
   const mouse = new THREE.Vector2();
 
@@ -74,10 +121,10 @@ export function setupClick(camera, renderer, activeDrones, onDroneClicked) {
 
     raycaster.setFromCamera(mouse, camera);
 
-    const intersects = raycaster.intersectObjects(activeDrones, true);
+    const intersects = raycaster.intersectObjects(activeObjects, true);
 
     if (intersects.length > 0) {
-      onDroneClicked(intersects[0].object);
+      onObjectClicked(intersects[0].object);
     }
   };
 
@@ -246,10 +293,11 @@ async function setupGlobeScene(mountRef, scene) {
 
 export default function App() {
   const handleDroneClick = () => {
-    setIsPanelOpen(true);
+    setisDronePanelOpen(true);
   };
 
-  const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const [isDronePanelOpen, setisDronePanelOpen] = useState(false);
+  const [isBasePanelOpen, setisBasePanelOpen] = useState(false);
   const mountRef = useRef(null);
 
   useEffect(() => {
@@ -272,15 +320,19 @@ export default function App() {
     const controls = createControls(camera, renderer);
     const resizeManager = setupResize(camera, renderer);
 
-    const activeDrones = [];
+    const objects = [];
 
-    const hoverManager = setupHover(camera, renderer, activeDrones);
+    const hoverManager = setupHover(camera, renderer, objects);
     const clickManager = setupClick(
       camera,
       renderer,
-      activeDrones,
-      (currentDrone) => {
-        setIsPanelOpen(true);
+      objects,
+      (clickedObject) => {
+        if (clickedObject.userData.type === "drone") {
+          setisDronePanelOpen(true);
+        } else if (clickedObject.userData.type === "base") {
+          setisBasePanelOpen(true);
+        }
       },
     );
 
@@ -295,8 +347,11 @@ export default function App() {
     setupGlobeScene(mountRef, scene).then((globe) => {
       setupGlobeRotation(globe, renderer);
       resizeManager.setGlobe(globe);
-      spawnDrone(globe, 45.9432, 24.9668, 0.05, activeDrones); // ro
-      spawnDrone(globe, 40.7128, -74.006, 0.05, activeDrones); // ny
+      spawnDrone(globe, 45.9432, 24.9668, 0.05, objects); // ro
+      spawnDrone(globe, 40.7128, -74.006, 0.05, objects); // ny
+      spawnBase(globe, 37.237, -115.808, objects); // Area 51, Nevada, SUA
+      spawnBase(globe, 35.6762, 139.6503, objects); // Tokyo, Japonia
+      spawnBase(globe, -33.8688, 151.2093, objects); // Sydney, Australia
     });
 
     return () => {
@@ -318,7 +373,18 @@ export default function App() {
   return (
     <div className="relative  w-screen h-screen overflow-hidden">
       <div ref={mountRef} className="absolute top-0 left-0 w-full h-full z-0" />
-      {isPanelOpen && <DronePanel onClose={() => setIsPanelOpen(false)} />}
+      {isDronePanelOpen && (
+        <DronePanel onClose={() => setisDronePanelOpen(false)} />
+      )}
+
+      {isBasePanelOpen && (
+        <BasePanel
+          onClose={() => setisBasePanelOpen(false)}
+          onDroneClick={(selectedDrone) => {
+            setisDronePanelOpen(true);
+          }}
+        />
+      )}
     </div>
   );
 }
