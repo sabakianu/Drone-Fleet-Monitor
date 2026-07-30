@@ -1,9 +1,10 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import ThreeGlobe from "three-globe";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import * as topojson from "topojson-client";
 import droneIcon from "./assets/Drone.png";
+import DronePanel from "./assets/Components/DronePanel.jsx";
 
 function spawnDrone(globe, lat, lng, alt, dronesArray) {
   const textureLoader = new THREE.TextureLoader();
@@ -63,6 +64,32 @@ function setupHover(camera, renderer, dronesArray) {
   };
 }
 
+export function setupClick(camera, renderer, activeDrones, onDroneClicked) {
+  const raycaster = new THREE.Raycaster();
+  const mouse = new THREE.Vector2();
+
+  const handleClick = (event) => {
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+    raycaster.setFromCamera(mouse, camera);
+
+    const intersects = raycaster.intersectObjects(activeDrones, true);
+
+    if (intersects.length > 0) {
+      onDroneClicked(intersects[0].object);
+    }
+  };
+
+  renderer.domElement.addEventListener("click", handleClick);
+
+  return {
+    cleanup: () => {
+      renderer.domElement.removeEventListener("click", handleClick);
+    },
+  };
+}
+
 function createCamera(width, height) {
   const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
 
@@ -70,6 +97,7 @@ function createCamera(width, height) {
 
   return camera;
 }
+
 function createControls(camera, renderer) {
   const controls = new OrbitControls(camera, renderer.domElement);
 
@@ -217,6 +245,11 @@ async function setupGlobeScene(mountRef, scene) {
 }
 
 export default function App() {
+  const handleDroneClick = () => {
+    setIsPanelOpen(true);
+  };
+
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
   const mountRef = useRef(null);
 
   useEffect(() => {
@@ -240,7 +273,17 @@ export default function App() {
     const resizeManager = setupResize(camera, renderer);
 
     const activeDrones = [];
+
     const hoverManager = setupHover(camera, renderer, activeDrones);
+    const clickManager = setupClick(
+      camera,
+      renderer,
+      activeDrones,
+      (dronaLovita) => {
+        setIsPanelOpen(true);
+      },
+    );
+
     const stopAnimation = animate(
       renderer,
       controls,
@@ -273,8 +316,9 @@ export default function App() {
   }, []);
 
   return (
-    <div className="flex w-screen h-screen overflow-hidden">
-      <div ref={mountRef} className="w-full h-full" />
+    <div className="relative  w-screen h-screen overflow-hidden">
+      <div ref={mountRef} className="absolute top-0 left-0 w-full h-full z-0" />
+      {isPanelOpen && <DronePanel onClose={() => setIsPanelOpen(false)} />}
     </div>
   );
 }
