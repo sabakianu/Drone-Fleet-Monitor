@@ -8,7 +8,13 @@ import baseIcon from "./assets/DroneBase.png";
 import DronePanel from "./assets/Components/DronePanel.jsx";
 import BasePanel from "./assets/Components/BasePanel.jsx";
 
-function spawnDrone(globe, lat, lng, alt, objectsArray) {
+async function fetchDrones() {
+  const res = await fetch("/api/drones");
+  if (!res.ok) throw new Error(`GET /api/drones -> ${res.status}`);
+  return res.json();
+}
+
+function spawnDrone(globe, drone, objectsArray) {
   const textureLoader = new THREE.TextureLoader();
   const texture = textureLoader.load(droneIcon);
 
@@ -21,12 +27,16 @@ function spawnDrone(globe, lat, lng, alt, objectsArray) {
   const sprite = new THREE.Sprite(material);
   sprite.scale.set(3, 3, 1);
 
-  const coords = globe.getCoords(lat, lng, alt);
+  const coords = globe.getCoords(
+    drone.currentLocation.latitude,
+    drone.currentLocation.longitude,
+    0.05,
+  );
   sprite.position.set(coords.x, coords.y, coords.z);
 
   sprite.userData = {
     type: "drone",
-    name: "Reaper",
+    drone,
     baseScale: 3,
     hoverScale: 3.5,
   };
@@ -292,11 +302,7 @@ async function setupGlobeScene(mountRef, scene) {
 }
 
 export default function App() {
-  const handleDroneClick = () => {
-    setisDronePanelOpen(true);
-  };
-
-  const [isDronePanelOpen, setisDronePanelOpen] = useState(false);
+  const [selectedDrone, setSelectedDrone] = useState(null);
   const [isBasePanelOpen, setisBasePanelOpen] = useState(false);
   const mountRef = useRef(null);
 
@@ -329,7 +335,7 @@ export default function App() {
       objects,
       (clickedObject) => {
         if (clickedObject.userData.type === "drone") {
-          setisDronePanelOpen(true);
+          setSelectedDrone(clickedObject.userData.drone);
         } else if (clickedObject.userData.type === "base") {
           setisBasePanelOpen(true);
         }
@@ -344,16 +350,19 @@ export default function App() {
       hoverManager.updateHover,
     );
 
-    setupGlobeScene(mountRef, scene).then((globe) => {
-      setupGlobeRotation(globe, renderer);
-      resizeManager.setGlobe(globe);
-      spawnDrone(globe, 45.9432, 24.9668, 0.05, objects); // ro
-      spawnDrone(globe, 40.7128, -74.006, 0.05, objects); // ny
-      spawnBase(globe, 37.237, -115.808, objects); // Area 51, Nevada, SUA
-      spawnBase(globe, 35.6762, 139.6503, objects); // Tokyo, Japonia
-      spawnBase(globe, -33.8688, 151.2093, objects); // Sydney, Australia
-    });
+    Promise.all([setupGlobeScene(mountRef, scene), fetchDrones()])
+      .then(([globe, droneList]) => {
+        setupGlobeRotation(globe, renderer);
+        resizeManager.setGlobe(globe);
 
+        console.log("drones from API:", droneList);
+        droneList.forEach((d) => spawnDrone(globe, d, objects));
+
+        spawnBase(globe, 37.237, -115.808, objects);
+        spawnBase(globe, 35.6762, 139.6503, objects);
+        spawnBase(globe, -33.8688, 151.2093, objects);
+      })
+      .catch((err) => console.error("failed to load drones:", err));
     return () => {
       stopAnimation();
       resizeManager.cleanup();
@@ -373,15 +382,18 @@ export default function App() {
   return (
     <div className="relative  w-screen h-screen overflow-hidden">
       <div ref={mountRef} className="absolute top-0 left-0 w-full h-full z-0" />
-      {isDronePanelOpen && (
-        <DronePanel onClose={() => setisDronePanelOpen(false)} />
+      {selectedDrone && (
+        <DronePanel
+          drone={selectedDrone}
+          onClose={() => setSelectedDrone(null)}
+        />
       )}
 
       {isBasePanelOpen && (
         <BasePanel
           onClose={() => setisBasePanelOpen(false)}
           onDroneClick={(selectedDrone) => {
-            setisDronePanelOpen(true);
+            setSelectedDrone;
           }}
         />
       )}

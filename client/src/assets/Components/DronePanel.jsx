@@ -4,15 +4,17 @@ import BatteryIcon from "../Battery.png";
 import LocationIcon from "../Location.png";
 import AltitudeIcon from "../Altitude.png";
 
-export default function DronePanel({ onClose }) {
+export default function DronePanel({ drone, onClose }) {
   return (
     <div className="absolute top-3.5 bottom-4.5 left-2.25 w-80 z-50 bg-zinc-200 shadow-xl rounded-xl p-3 border-2 border-zinc-300 flex flex-col">
       <div className="relative flex items-center justify-between mb-4">
         <div>
           <h1 className="text-xl text-slate-700 font-semibold">
-            Nume Drona Test
+            Drone #{drone.id}
           </h1>
-          <h2 className="text-sm text-slate-500 font-medium">Model: reaper</h2>
+          <h2 className="text-sm text-slate-500 font-medium">
+            Model: reaper (mock)
+          </h2>
         </div>
         <button
           onClick={onClose}
@@ -31,7 +33,10 @@ export default function DronePanel({ onClose }) {
       </div>
 
       <div className="text-sm text-slate-500 font-medium text-center mb-4">
-        Civilian Drone
+        {["delivery", "survey"].includes(drone.droneType)
+          ? "Civilian"
+          : "Military"}{" "}
+        Drone{" "}
       </div>
 
       {/* baterie */}
@@ -41,7 +46,9 @@ export default function DronePanel({ onClose }) {
           alt="Battery"
           className="w-6 h-6 object-contain"
         />
-        <p className="text-lg font-bold text-slate-900">Battery: 67%</p>
+        <p className="text-lg font-bold text-slate-900">
+          Battery: {Math.round(drone.batteryLevel)}%
+        </p>
       </div>
 
       {/* locatie */}
@@ -57,11 +64,17 @@ export default function DronePanel({ onClose }) {
           </div>
           <div className="flex items-center gap-4 text-sm text-slate-600 pl-7">
             <p>
-              Lat: <span className="font-bold text-slate-800">55</span>
+              Lat:{" "}
+              <span className="font-bold text-slate-800">
+                {drone.currentLocation.latitude.toFixed(4)}
+              </span>
             </p>
             <div className="w-px h-3 bg-slate-300"></div>{" "}
             <p>
-              Long: <span className="font-bold text-slate-800">67</span>
+              Long:{" "}
+              <span className="font-bold text-slate-800">
+                {drone.currentLocation.longitude.toFixed(4)}
+              </span>
             </p>
           </div>
         </div>
@@ -77,7 +90,7 @@ export default function DronePanel({ onClose }) {
             <h3 className="text-sm font-semibold text-slate-700">Altitude:</h3>
           </div>
           <div className="text-sm text-slate-600 pl-7">
-            <span className="font-bold text-slate-800">0m</span>{" "}
+            <span className="font-bold text-slate-800">{drone.altitude}m</span>{" "}
             <span className="text-xs text-slate-500">(max 100km)</span>
           </div>
         </div>
@@ -88,7 +101,10 @@ export default function DronePanel({ onClose }) {
           </div>
           <div className="flex items-center gap-4 text-sm text-slate-600 pl-7">
             <p>
-              Horiz: <span className="font-bold text-slate-800">45 km/h</span>{" "}
+              Horiz:{" "}
+              <span className="font-bold text-slate-800">
+                {drone.speed} km/h
+              </span>{" "}
               <span className="text-xs text-slate-500">(max 120)</span>
             </p>
             <div className="w-px h-3 bg-slate-300"></div>
@@ -103,7 +119,7 @@ export default function DronePanel({ onClose }) {
       {/* status */}
       <div className="mb-4">
         <h3 className="text-sm font-semibold text-slate-700">
-          Status: Running
+          Status: {drone.status}
         </h3>
       </div>
 
