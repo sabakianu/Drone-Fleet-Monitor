@@ -25,6 +25,9 @@ namespace Drones
         public List<BaseDrone> Drones { get; set; } = new();
 
         [NotMapped]
+        public abstract string ImagePath { get; }
+
+        [NotMapped]
         public int DroneCount => Drones.Count;
 
         [NotMapped]
@@ -37,9 +40,15 @@ namespace Drones
         public int DronesInFlightCount => Drones.Count - DronesInBaseCount;
     }
 
-    public class CivilianBase : DroneBase { }
+    public class CivilianBase : DroneBase
+    {
+        public override string ImagePath => "Images/Bases/CivilianDroneBase.jpg";
+    }
 
-    public class MilitaryBase : DroneBase { }
+    public class MilitaryBase : DroneBase
+    {
+        public override string ImagePath => "Images/Bases/MilitaryDroneBase.jpg";
+    }
 
     public record NewBaseRequest(
         string Category,

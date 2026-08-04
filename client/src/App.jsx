@@ -3,8 +3,8 @@ import * as THREE from "three";
 import ThreeGlobe from "three-globe";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import * as topojson from "topojson-client";
-import droneIcon from "./assets/Drone.png";
-import baseIcon from "./assets/DroneBase.png";
+import droneIcon from "./assets/Icons/Drone.png";
+import baseIcon from "./assets/Icons/DroneBase.png";
 import DronePanel from "./assets/Components/DronePanel.jsx";
 import BasePanel from "./assets/Components/BasePanel.jsx";
 

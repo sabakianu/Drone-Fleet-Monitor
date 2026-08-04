@@ -93,6 +93,9 @@ namespace Drones
 
         // NotMapped -> nu se slaveaza in baza de date
         [NotMapped]
+        public abstract string ImagePath { get; }
+
+        [NotMapped]
         public abstract float MaxHorizontalSpeed { get; }
         [NotMapped]
         public abstract float MaxVerticalSpeed { get; }

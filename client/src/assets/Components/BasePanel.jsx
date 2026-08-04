@@ -1,8 +1,9 @@
 import { useState } from "react";
-import droneImg from "../hero.png";
-import CloseButton from "../CloseButton.png";
-import LocationIcon from "../Location.png";
-import BatteryIcon from "../Battery.png";
+import CloseButton from "../Icons/CloseButton.png";
+import LocationIcon from "../Icons/Location.png";
+import BatteryIcon from "../Icons/Battery.png";
+import RelocateIcon from "../Icons/Relocate.png";
+import { resolveImage } from "../images.js";
 
 const DRONE_VIEWS = [
   {
@@ -24,6 +25,7 @@ const DRONE_VIEWS = [
 
 export default function BasePanel({ droneBase, onClose, onDroneClick }) {
   const drones = droneBase.drones ?? [];
+  const baseImg = resolveImage(droneBase.imagePath);
 
   const [viewIndex, setViewIndex] = useState(0);
   const view = DRONE_VIEWS[viewIndex];
@@ -55,7 +57,11 @@ export default function BasePanel({ droneBase, onClose, onDroneClick }) {
       </div>
 
       <div className="h-36 w-full overflow-hidden rounded-lg">
-        <img src={droneImg} alt="Hero" className="w-full h-full object-cover" />
+        <img
+          src={baseImg}
+          alt={`${droneBase.category} Base`}
+          className="w-full h-full object-cover"
+        />
       </div>
 
       <div className="text-sm text-slate-500 font-medium text-center mb-4">
@@ -204,10 +210,11 @@ export default function BasePanel({ droneBase, onClose, onDroneClick }) {
 
                 <button
                   onClick={(event) => event.stopPropagation()}
+                  aria-label="Relocate drone"
                   className="p-1 rounded-lg hover:bg-slate-400/40 transition-colors"
                 >
                   <img
-                    src={LocationIcon}
+                    src={RelocateIcon}
                     alt="Relocate"
                     className="w-4 h-4 object-contain opacity-70 hover:opacity-100"
                   />

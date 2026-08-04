@@ -1,13 +1,15 @@
-import droneImg from "../hero.png";
-import CloseButton from "../CloseButton.png";
-import BatteryIcon from "../Battery.png";
-import LocationIcon from "../Location.png";
-import AltitudeIcon from "../Altitude.png";
+import CloseButton from "../Icons/CloseButton.png";
+import BatteryIcon from "../Icons/Battery.png";
+import LocationIcon from "../Icons/Location.png";
+import AltitudeIcon from "../Icons/Altitude.png";
+import { resolveImage } from "../images.js";
 
 export default function DronePanel({ drone, onClose }) {
   const batteryMah = Math.round(
     (drone.batteryLevel / 100) * drone.batteryCapacity,
   );
+
+  const droneImg = resolveImage(drone.imagePath);
 
   return (
     <div className="absolute top-3.5 bottom-4.5 left-2.25 w-80 z-50 bg-zinc-200 shadow-xl rounded-xl p-3 border-2 border-zinc-300 flex flex-col">
@@ -33,7 +35,11 @@ export default function DronePanel({ drone, onClose }) {
       </div>
 
       <div className="h-36 w-full overflow-hidden rounded-lg">
-        <img src={droneImg} alt="Hero" className="w-full h-full object-cover" />
+        <img
+          src={droneImg}
+          alt={drone.model}
+          className="w-full h-full object-cover"
+        />
       </div>
 
       <div className="text-sm text-slate-500 font-medium text-center mb-4">
