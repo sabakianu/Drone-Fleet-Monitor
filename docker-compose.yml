@@ -15,7 +15,9 @@ services:
     restart: always
 
   api:
-    build: .
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
     container_name: drone_fleet_api
     ports:
       - "8080:8080"

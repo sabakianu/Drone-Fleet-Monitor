@@ -1,0 +1,96 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace Drones
+{
+    public class Location
+    {
+        public float Latitude { get; set; }
+        public float Longitude { get; set; }
+        public float Altitude { get; set; }
+
+        public void SetLocation(float la, float lo, float al)
+        {
+            Latitude = la;
+            Longitude = lo;
+            Altitude = al;
+        }
+    }
+
+    public enum DroneCategory
+    {
+        Civilian = 0,
+        Military = 1,
+    }
+
+    public enum DroneKind
+    {
+        Delivery = 0,
+        Survey = 1,
+        Recon = 2,
+        Combat = 3,
+    }
+
+    public enum DroneModel
+    {
+        Wingcopter198 = 0,
+        MatternetM2 = 1,
+        Phantom4RTK = 2,
+        MavicEnterprise = 3,
+        BayraktarTB2 = 4,
+        Heron1 = 5,
+        MQ9Reaper = 6,
+        BayraktarAkinci = 7,
+    }
+
+    public interface IDrone
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public Location CurrentLocation { get; set; }
+        public float BatteryLevel { get; set; }
+        string Status { get; set; }
+        float Speed { get; set; }
+    }
+
+    public abstract class BaseDrone : IDrone
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = "";
+        public Location CurrentLocation { get; set; } = new Location();
+        public float BatteryLevel { get; set; }
+        public string Status { get; set; } = "offline";
+        public float Speed { get; set; }
+
+        public DroneModel Model { get; private set; }      // discriminator TPH
+        public DroneKind Kind { get; protected set; }      // setat de tipul abstract
+        public DroneCategory Category { get; protected set; }
+
+        // specificații fixe per model — nu se salvează în DB
+        [NotMapped]
+        public abstract float MaxSpeed { get; }        // km/h
+        [NotMapped]
+        public abstract float MaxAltitude { get; }     // m
+        [NotMapped]
+        public abstract float BatteryCapacity { get; } // mAh
+    }
+
+    public abstract class CivilianDrone : BaseDrone
+    {
+        protected CivilianDrone()
+        {
+            Category = DroneCategory.Civilian;
+        }
+
+        public string RegistrationNumber { get; set; } = "";
+    }
+
+    public abstract class MilitaryDrone : BaseDrone
+    {
+        protected MilitaryDrone()
+        {
+            Category = DroneCategory.Military;
+        }
+
+        public string EncryptionKey { get; set; } = "";
+    }
+}

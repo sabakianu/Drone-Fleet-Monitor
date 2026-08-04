@@ -7,7 +7,6 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
-builder.Services.AddScoped<DroneManager>();
 builder.Services.AddDbContext<DroneContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -47,29 +46,18 @@ app.MapGet("/api/drones/military", (DroneContext context) =>
 
 app.MapPost("/api/drones/add", (string type, DroneContext context) =>
 {
-    BaseDrone newDrone;
-    switch (type.ToLower())
+    BaseDrone newDrone = type.ToLower() switch
     {
-        case "delivery":
-            newDrone = new DeliveryDrone();
-            break;
-
-        case "survey":
-            newDrone = new SurveyDrone();
-
-            break;
-
-        case "recon":
-            newDrone = new ReconDrone();
-            break;
-
-        case "combat":
-            newDrone = new CombatDrone();
-            break;
-
-        default:
-            throw new ArgumentException("Unknown Drone!");
-    }
+        "wingcopter198" => new Wingcopter198(),
+        "matternetm2" => new MatternetM2(),
+        "phantom4rtk" => new Phantom4RTK(),
+        "mavicenterprise" => new MavicEnterprise(),
+        "bayraktartb2" => new BayraktarTB2(),
+        "heron1" => new Heron1(),
+        "mq9reaper" => new MQ9Reaper(),
+        "bayraktarakinci" => new BayraktarAkinci(),
+        _ => throw new ArgumentException("Unknown Drone!"),
+    };
 
     context.Drones.Add(newDrone);
     context.SaveChanges();
