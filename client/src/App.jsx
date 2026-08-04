@@ -360,11 +360,7 @@ export default function App() {
       hoverManager.updateHover,
     );
 
-    Promise.all([
-      setupGlobeScene(mountRef, scene),
-      fetchDrones(),
-      fetchBases(),
-    ])
+    Promise.all([setupGlobeScene(mountRef, scene), fetchDrones(), fetchBases()])
       .then(([globe, droneList, baseList]) => {
         setupGlobeRotation(globe, renderer);
         resizeManager.setGlobe(globe);
@@ -372,7 +368,11 @@ export default function App() {
         console.log("drones from API:", droneList);
         console.log("bases from API:", baseList);
 
-        droneList.forEach((d) => spawnDrone(globe, d, objects));
+        // dronele parcate în bază nu se randează pe glob
+        droneList
+          .filter((d) => !d.isInBase)
+          .forEach((d) => spawnDrone(globe, d, objects));
+
         baseList.forEach((b) => spawnBase(globe, b, objects));
       })
       .catch((err) => console.error("failed to load fleet:", err));

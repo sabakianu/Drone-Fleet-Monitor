@@ -23,7 +23,7 @@ public class DroneContext : DbContext
 
         modelBuilder.Entity<DroneBase>()
             .HasMany(b => b.Drones)
-            .WithOne()
+            .WithOne(d => d.HomeBase)
             .HasForeignKey(d => d.DroneBaseId)
             .OnDelete(DeleteBehavior.SetNull);
 

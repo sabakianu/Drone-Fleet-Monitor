@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace Drones
 {
@@ -78,6 +79,17 @@ namespace Drones
         public DroneCategory Category { get; protected set; }
 
         public int? DroneBaseId { get; set; }              // baza de care aparține
+
+        [JsonIgnore]
+        public DroneBase? HomeBase { get; set; }
+
+        // e parcată în bază: aceleași coordonate + altitudine ca baza.
+        [NotMapped]
+        public bool IsInBase =>
+            HomeBase != null
+            && MathF.Abs(CurrentLocation.Latitude - HomeBase.CurrentLocation.Latitude) < 0.0001f
+            && MathF.Abs(CurrentLocation.Longitude - HomeBase.CurrentLocation.Longitude) < 0.0001f
+            && MathF.Abs(CurrentLocation.Altitude - HomeBase.CurrentLocation.Altitude) < 0.5f;
 
         // NotMapped -> nu se slaveaza in baza de date
         [NotMapped]

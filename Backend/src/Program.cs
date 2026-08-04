@@ -24,7 +24,10 @@ if (app.Environment.IsDevelopment())
 
 app.MapGet("/api/drones", (DroneContext context) =>
 {
-    var drones = context.Drones.ToList();
+    var drones = context.Drones
+        .Include(d => d.HomeBase)
+        .ToList();
+
     return Results.Ok(drones);
 });
 
@@ -213,6 +216,41 @@ app.MapPost("/api/bases/{id}/drones", (int id, string type, DroneContext context
     context.SaveChanges();
 
     return Results.Ok(newDrone);
+});
+
+app.MapPut("/api/bases/{id}/status", (int id, string status, DroneContext context) =>
+{
+    var droneBase = context.Bases.FirstOrDefault(b => b.Id == id);
+
+    if (droneBase == null)
+    {
+        return Results.NotFound($"Baza cu ID-ul {id} nu a fost găsită.");
+    }
+
+    if (status.ToLower() != "online" && status.ToLower() != "offline")
+    {
+        return Results.BadRequest("Status invalid. Acceptate: online, offline.");
+    }
+
+    droneBase.Status = status.ToLower();
+    context.SaveChanges();
+
+    return Results.Ok(droneBase);
+});
+
+app.MapPut("/api/bases/{id}/name", (int id, string name, DroneContext context) =>
+{
+    var droneBase = context.Bases.FirstOrDefault(b => b.Id == id);
+
+    if (droneBase == null)
+    {
+        return Results.NotFound($"Baza cu ID-ul {id} nu a fost găsită.");
+    }
+
+    droneBase.Name = name;
+    context.SaveChanges();
+
+    return Results.Ok(droneBase);
 });
 
 app.MapDelete("/api/bases/{id}", (int id, DroneContext context) =>

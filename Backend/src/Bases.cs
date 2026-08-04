@@ -8,6 +8,7 @@ namespace Drones
         public string Name { get; set; }
         public Location CurrentLocation { get; set; }
         public int MaxDroneCapacity { get; set; }
+        public string Status { get; set; }
         List<BaseDrone> Drones { get; set; }
     }
 
@@ -17,8 +18,9 @@ namespace Drones
         public string Name { get; set; } = "";
         public Location CurrentLocation { get; set; } = new Location();
         public int MaxDroneCapacity { get; set; }
+        public string Status { get; set; } = "offline";
 
-        public DroneCategory Category { get; private set; }   // discriminator 
+        public DroneCategory Category { get; private set; }   // discriminator
 
         public List<BaseDrone> Drones { get; set; } = new();
 
@@ -27,6 +29,12 @@ namespace Drones
 
         [NotMapped]
         public bool IsFull => Drones.Count >= MaxDroneCapacity;
+
+        [NotMapped]
+        public int DronesInBaseCount => Drones.Count(d => d.IsInBase);
+
+        [NotMapped]
+        public int DronesInFlightCount => Drones.Count - DronesInBaseCount;
     }
 
     public class CivilianBase : DroneBase { }
