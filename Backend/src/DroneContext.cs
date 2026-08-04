@@ -12,6 +12,7 @@ public class DroneContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<BaseDrone>().OwnsOne(d => d.CurrentLocation);
+        modelBuilder.Entity<BaseDrone>().OwnsOne(d => d.CurrentSpeed);
 
         modelBuilder.Entity<BaseDrone>()
             .HasDiscriminator<DroneModel>("Model")

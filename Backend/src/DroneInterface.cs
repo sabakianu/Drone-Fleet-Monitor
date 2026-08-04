@@ -16,6 +16,18 @@ namespace Drones
         }
     }
 
+    public class Speed
+    {
+        public float Horizontal { get; set; }   // km/h
+        public float Vertical { get; set; }     // m/s
+
+        public void SetSpeed(float h, float v)
+        {
+            Horizontal = h;
+            Vertical = v;
+        }
+    }
+
     public enum DroneCategory
     {
         Civilian = 0,
@@ -47,9 +59,9 @@ namespace Drones
         public int Id { get; set; }
         public string Name { get; set; }
         public Location CurrentLocation { get; set; }
+        public Speed CurrentSpeed { get; set; }
         public float BatteryLevel { get; set; }
         string Status { get; set; }
-        float Speed { get; set; }
     }
 
     public abstract class BaseDrone : IDrone
@@ -57,21 +69,23 @@ namespace Drones
         public int Id { get; set; }
         public string Name { get; set; } = "";
         public Location CurrentLocation { get; set; } = new Location();
+        public Speed CurrentSpeed { get; set; } = new Speed();
         public float BatteryLevel { get; set; }
         public string Status { get; set; } = "offline";
-        public float Speed { get; set; }
 
-        public DroneModel Model { get; private set; }      // discriminator TPH
+        public DroneModel Model { get; private set; }      // discriminator 
         public DroneKind Kind { get; protected set; }      // setat de tipul abstract
         public DroneCategory Category { get; protected set; }
 
-        // specificații fixe per model — nu se salvează în DB
+        // NotMapped -> nu se slaveaza in baza de date
         [NotMapped]
-        public abstract float MaxSpeed { get; }        // km/h
+        public abstract float MaxHorizontalSpeed { get; }
         [NotMapped]
-        public abstract float MaxAltitude { get; }     // m
+        public abstract float MaxVerticalSpeed { get; }
         [NotMapped]
-        public abstract float BatteryCapacity { get; } // mAh
+        public abstract float MaxAltitude { get; }
+        [NotMapped]
+        public abstract float BatteryCapacity { get; }
     }
 
     public abstract class CivilianDrone : BaseDrone

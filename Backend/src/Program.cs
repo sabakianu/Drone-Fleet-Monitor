@@ -7,6 +7,10 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
+builder.Services.ConfigureHttpJsonOptions(o =>
+    o.SerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
+
+
 builder.Services.AddDbContext<DroneContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -91,6 +95,12 @@ app.MapDelete("/api/drones/{id}", (int id, DroneContext context) =>
     }
 
     return Results.NotFound($"Drona cu ID-ul {id} nu a fost găsită.");
+});
+
+app.MapDelete("/api/drones", (DroneContext context) =>
+{
+    var deleted = context.Drones.ExecuteDelete();
+    return Results.Ok(new { deleted });
 });
 
 

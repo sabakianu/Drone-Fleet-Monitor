@@ -1,5 +1,7 @@
 @Drone_Fleet_Monitor_HostAddress = http://localhost:8080
 
+### ─────────────── GET ───────────────
+
 GET {{Drone_Fleet_Monitor_HostAddress}}/api/drones
 Accept: application/json
 
@@ -12,22 +14,47 @@ GET {{Drone_Fleet_Monitor_HostAddress}}/api/drones/military
 Accept: application/json
 
 ###
-
-POST {{Drone_Fleet_Monitor_HostAddress}}/api/drones/add?type=delivery
-
-###
-POST {{Drone_Fleet_Monitor_HostAddress}}/api/drones/add?type=survey
-
-###
-POST {{Drone_Fleet_Monitor_HostAddress}}/api/drones/add?type=recon
-
-###
-POST {{Drone_Fleet_Monitor_HostAddress}}/api/drones/add?type=combat
-
-###
-
-GET {{Drone_Fleet_Monitor_HostAddress}}/api/drones/2
+GET {{Drone_Fleet_Monitor_HostAddress}}/api/drones/1
 Accept: application/json
 
+### ─────────── POST civilian ───────────
+
+# DeliveryDrone
+POST {{Drone_Fleet_Monitor_HostAddress}}/api/drones/add?type=wingcopter198
+
 ###
-DELETE {{Drone_Fleet_Monitor_HostAddress}}/api/drones/3
+# DeliveryDrone
+POST {{Drone_Fleet_Monitor_HostAddress}}/api/drones/add?type=matternetm2
+
+###
+# SurveyDrone
+POST {{Drone_Fleet_Monitor_HostAddress}}/api/drones/add?type=phantom4rtk
+
+###
+# SurveyDrone
+POST {{Drone_Fleet_Monitor_HostAddress}}/api/drones/add?type=mavicenterprise
+
+### ─────────── POST military ───────────
+
+# ReconDrone
+POST {{Drone_Fleet_Monitor_HostAddress}}/api/drones/add?type=bayraktartb2
+
+###
+# ReconDrone
+POST {{Drone_Fleet_Monitor_HostAddress}}/api/drones/add?type=heron1
+
+###
+# CombatDrone
+POST {{Drone_Fleet_Monitor_HostAddress}}/api/drones/add?type=mq9reaper
+
+###
+# CombatDrone
+POST {{Drone_Fleet_Monitor_HostAddress}}/api/drones/add?type=bayraktarakinci
+
+### ────────────── DELETE ──────────────
+
+DELETE {{Drone_Fleet_Monitor_HostAddress}}/api/drones/1
+
+###
+# Reset
+DELETE {{Drone_Fleet_Monitor_HostAddress}}/api/drones
