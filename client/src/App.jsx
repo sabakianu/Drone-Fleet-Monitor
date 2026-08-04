@@ -14,6 +14,12 @@ async function fetchDrones() {
   return res.json();
 }
 
+async function fetchBases() {
+  const res = await fetch("/api/bases");
+  if (!res.ok) throw new Error(`GET /api/bases -> ${res.status}`);
+  return res.json();
+}
+
 function spawnDrone(globe, drone, objectsArray) {
   const textureLoader = new THREE.TextureLoader();
   const texture = textureLoader.load(droneIcon);
@@ -46,7 +52,7 @@ function spawnDrone(globe, drone, objectsArray) {
   return sprite;
 }
 
-function spawnBase(globe, lat, lng, objectsArray) {
+function spawnBase(globe, droneBase, objectsArray) {
   const textureLoader = new THREE.TextureLoader();
   const texture = textureLoader.load(baseIcon);
 
@@ -60,14 +66,18 @@ function spawnBase(globe, lat, lng, objectsArray) {
   const geometry = new THREE.PlaneGeometry(3, 3);
   const baseMesh = new THREE.Mesh(geometry, material);
 
-  const coords = globe.getCoords(lat, lng, 0.01);
+  const coords = globe.getCoords(
+    droneBase.currentLocation.latitude,
+    droneBase.currentLocation.longitude,
+    0.01,
+  );
   baseMesh.position.set(coords.x, coords.y, coords.z);
 
   baseMesh.lookAt(0, 0, 0);
 
   baseMesh.userData = {
     type: "base",
-    name: "Baza Militară",
+    droneBase,
     baseScale: 1,
     hoverScale: 1.2,
   };
@@ -303,7 +313,7 @@ async function setupGlobeScene(mountRef, scene) {
 
 export default function App() {
   const [selectedDrone, setSelectedDrone] = useState(null);
-  const [isBasePanelOpen, setisBasePanelOpen] = useState(false);
+  const [selectedBase, setSelectedBase] = useState(null);
   const mountRef = useRef(null);
 
   useEffect(() => {
@@ -337,7 +347,7 @@ export default function App() {
         if (clickedObject.userData.type === "drone") {
           setSelectedDrone(clickedObject.userData.drone);
         } else if (clickedObject.userData.type === "base") {
-          setisBasePanelOpen(true);
+          setSelectedBase(clickedObject.userData.droneBase);
         }
       },
     );
@@ -350,19 +360,22 @@ export default function App() {
       hoverManager.updateHover,
     );
 
-    Promise.all([setupGlobeScene(mountRef, scene), fetchDrones()])
-      .then(([globe, droneList]) => {
+    Promise.all([
+      setupGlobeScene(mountRef, scene),
+      fetchDrones(),
+      fetchBases(),
+    ])
+      .then(([globe, droneList, baseList]) => {
         setupGlobeRotation(globe, renderer);
         resizeManager.setGlobe(globe);
 
         console.log("drones from API:", droneList);
-        droneList.forEach((d) => spawnDrone(globe, d, objects));
+        console.log("bases from API:", baseList);
 
-        spawnBase(globe, 37.237, -115.808, objects);
-        spawnBase(globe, 35.6762, 139.6503, objects);
-        spawnBase(globe, -33.8688, 151.2093, objects);
+        droneList.forEach((d) => spawnDrone(globe, d, objects));
+        baseList.forEach((b) => spawnBase(globe, b, objects));
       })
-      .catch((err) => console.error("failed to load drones:", err));
+      .catch((err) => console.error("failed to load fleet:", err));
     return () => {
       stopAnimation();
       resizeManager.cleanup();
@@ -389,12 +402,11 @@ export default function App() {
         />
       )}
 
-      {isBasePanelOpen && (
+      {selectedBase && (
         <BasePanel
-          onClose={() => setisBasePanelOpen(false)}
-          onDroneClick={(selectedDrone) => {
-            setSelectedDrone;
-          }}
+          droneBase={selectedBase}
+          onClose={() => setSelectedBase(null)}
+          onDroneClick={setSelectedDrone}
         />
       )}
     </div>

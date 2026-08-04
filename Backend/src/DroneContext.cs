@@ -8,11 +8,24 @@ public class DroneContext : DbContext
     }
 
     public DbSet<BaseDrone> Drones { get; set; }
+    public DbSet<DroneBase> Bases { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<BaseDrone>().OwnsOne(d => d.CurrentLocation);
         modelBuilder.Entity<BaseDrone>().OwnsOne(d => d.CurrentSpeed);
+        modelBuilder.Entity<DroneBase>().OwnsOne(b => b.CurrentLocation);
+
+        modelBuilder.Entity<DroneBase>()
+            .HasDiscriminator<DroneCategory>("Category")
+            .HasValue<CivilianBase>(DroneCategory.Civilian)
+            .HasValue<MilitaryBase>(DroneCategory.Military);
+
+        modelBuilder.Entity<DroneBase>()
+            .HasMany(b => b.Drones)
+            .WithOne()
+            .HasForeignKey(d => d.DroneBaseId)
+            .OnDelete(DeleteBehavior.SetNull);
 
         modelBuilder.Entity<BaseDrone>()
             .HasDiscriminator<DroneModel>("Model")

@@ -104,6 +104,139 @@ app.MapDelete("/api/drones", (DroneContext context) =>
 });
 
 
+// Baze
+
+app.MapGet("/api/bases", (DroneContext context) =>
+{
+    var bases = context.Bases
+        .Include(b => b.Drones)
+        .ToList();
+
+    return Results.Ok(bases);
+});
+
+app.MapGet("/api/bases/civilian", (DroneContext context) =>
+{
+    var civilianBases = context.Bases
+        .Include(b => b.Drones)
+        .OfType<CivilianBase>()
+        .ToList();
+
+    return Results.Ok(civilianBases);
+});
+
+app.MapGet("/api/bases/military", (DroneContext context) =>
+{
+    var militaryBases = context.Bases
+        .Include(b => b.Drones)
+        .OfType<MilitaryBase>()
+        .ToList();
+
+    return Results.Ok(militaryBases);
+});
+
+app.MapGet("/api/bases/{id}", (int id, DroneContext context) =>
+{
+    var droneBase = context.Bases
+        .Include(b => b.Drones)
+        .FirstOrDefault(b => b.Id == id);
+
+    if (droneBase == null)
+    {
+        return Results.NotFound($"Baza cu ID-ul {id} nu a fost găsită.");
+    }
+
+    return Results.Ok(droneBase);
+});
+
+app.MapPost("/api/bases/add", (NewBaseRequest request, DroneContext context) =>
+{
+    DroneBase newBase = request.Category.ToLower() switch
+    {
+        "civilian" => new CivilianBase(),
+        "military" => new MilitaryBase(),
+        _ => throw new ArgumentException("Unknown Base Category!"),
+    };
+
+    newBase.Name = request.Name;
+    newBase.MaxDroneCapacity = request.MaxDroneCapacity;
+    newBase.CurrentLocation.SetLocation(request.Latitude, request.Longitude, 0f);
+
+    context.Bases.Add(newBase);
+    context.SaveChanges();
+
+    return Results.Ok(newBase);
+});
+
+app.MapPost("/api/bases/{id}/drones", (int id, string type, DroneContext context) =>
+{
+    var droneBase = context.Bases
+        .Include(b => b.Drones)
+        .FirstOrDefault(b => b.Id == id);
+
+    if (droneBase == null)
+    {
+        return Results.NotFound($"Baza cu ID-ul {id} nu a fost găsită.");
+    }
+
+    if (droneBase.IsFull)
+    {
+        return Results.BadRequest(
+            $"Baza {droneBase.Name} e plină ({droneBase.DroneCount}/{droneBase.MaxDroneCapacity}).");
+    }
+
+    BaseDrone newDrone = type.ToLower() switch
+    {
+        "wingcopter198" => new Wingcopter198(),
+        "matternetm2" => new MatternetM2(),
+        "phantom4rtk" => new Phantom4RTK(),
+        "mavicenterprise" => new MavicEnterprise(),
+        "bayraktartb2" => new BayraktarTB2(),
+        "heron1" => new Heron1(),
+        "mq9reaper" => new MQ9Reaper(),
+        "bayraktarakinci" => new BayraktarAkinci(),
+        _ => throw new ArgumentException("Unknown Drone!"),
+    };
+
+    if (newDrone.Category != droneBase.Category)
+    {
+        return Results.BadRequest(
+            $"O dronă {newDrone.Category} nu poate fi asignată unei baze {droneBase.Category}.");
+    }
+
+    newDrone.CurrentLocation.SetLocation(
+        droneBase.CurrentLocation.Latitude,
+        droneBase.CurrentLocation.Longitude,
+        0f);
+
+    droneBase.Drones.Add(newDrone);
+    context.SaveChanges();
+
+    return Results.Ok(newDrone);
+});
+
+app.MapDelete("/api/bases/{id}", (int id, DroneContext context) =>
+{
+    var droneBase = context.Bases.FirstOrDefault(b => b.Id == id);
+
+    if (droneBase == null)
+    {
+        return Results.NotFound($"Baza cu ID-ul {id} nu a fost găsită.");
+    }
+
+    context.Bases.Remove(droneBase);
+    context.SaveChanges();
+
+    return Results.Ok(droneBase);
+});
+
+app.MapDelete("/api/bases", (DroneContext context) =>
+{
+    var deleted = context.Bases.ExecuteDelete();
+    return Results.Ok(new { deleted });
+});
+
+
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<DroneContext>();

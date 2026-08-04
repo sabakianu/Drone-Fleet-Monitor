@@ -73,9 +73,11 @@ namespace Drones
         public float BatteryLevel { get; set; }
         public string Status { get; set; } = "offline";
 
-        public DroneModel Model { get; private set; }      // discriminator 
+        public DroneModel Model { get; private set; }      // discriminator
         public DroneKind Kind { get; protected set; }      // setat de tipul abstract
         public DroneCategory Category { get; protected set; }
+
+        public int? DroneBaseId { get; set; }              // baza de care aparține
 
         // NotMapped -> nu se slaveaza in baza de date
         [NotMapped]
