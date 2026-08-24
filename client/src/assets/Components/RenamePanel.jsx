@@ -33,8 +33,6 @@ export default function RenamePanel({
   };
 
   return (
-    // fundalul intunecat nu inchide dialogul: un drag din input care se
-    // termina in afara casetei ar anula pe nedrept
     <div className="absolute inset-0 z-60 flex items-center justify-center bg-slate-900/30">
       <form
         onSubmit={handleSubmit}

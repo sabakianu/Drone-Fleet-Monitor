@@ -38,7 +38,7 @@ export default function DronePanel({
 
   const handleDestroy = () => {
     const label = drone.name || `Drone #${drone.id}`;
-    if (!window.confirm(`Destroy ${label}? Aceasta actiune e ireversibila.`)) {
+    if (!window.confirm(`Destroy ${label}?`)) {
       return;
     }
 

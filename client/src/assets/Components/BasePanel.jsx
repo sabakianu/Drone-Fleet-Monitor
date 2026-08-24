@@ -68,10 +68,7 @@ export default function BasePanel({
 
     const effects = [];
     if (parked > 0) {
-      effects.push(`${parked} drone parcate vor fi distruse`);
-    }
-    if (inFlight > 0) {
-      effects.push(`${inFlight} drone in zbor raman in flota, fara baza`);
+      effects.push(`The parked drones will be destroyed`);
     }
 
     const warning = effects.length > 0 ? ` ${effects.join("; ")}.` : "";
