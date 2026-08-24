@@ -23,7 +23,13 @@ const DRONE_VIEWS = [
   },
 ];
 
-export default function BasePanel({ droneBase, onClose, onDroneClick }) {
+export default function BasePanel({
+  droneBase,
+  onClose,
+  onDroneClick,
+  onToggleStatus,
+  onDecommission,
+}) {
   const drones = droneBase.drones ?? [];
   const baseImg = resolveImage(droneBase.imagePath);
 
@@ -35,6 +41,46 @@ export default function BasePanel({ droneBase, onClose, onDroneClick }) {
     setViewIndex(
       (current) => (current + step + DRONE_VIEWS.length) % DRONE_VIEWS.length,
     );
+
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+
+  // blocheaza butoanele cat timp requestul e in zbor si arata eroarea daca pica
+  const run = async (action) => {
+    setBusy(true);
+    setError(null);
+
+    try {
+      await action(droneBase);
+    } catch (err) {
+      console.error(err);
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleDecommission = () => {
+    const label = droneBase.name || `Base #${droneBase.id}`;
+    const parked = droneBase.dronesInBaseCount;
+    const inFlight = droneBase.dronesInFlightCount;
+
+    const effects = [];
+    if (parked > 0) {
+      effects.push(`${parked} drone parcate vor fi distruse`);
+    }
+    if (inFlight > 0) {
+      effects.push(`${inFlight} drone in zbor raman in flota, fara baza`);
+    }
+
+    const warning = effects.length > 0 ? ` ${effects.join("; ")}.` : "";
+
+    if (!window.confirm(`Decommission ${label}?${warning}`)) {
+      return;
+    }
+
+    run(onDecommission);
+  };
 
   return (
     <div className="absolute top-3.5 bottom-4.5 right-2.25 w-80 z-50 bg-zinc-200 shadow-xl rounded-xl p-3 border-2 border-zinc-300 flex flex-col">
@@ -226,11 +272,21 @@ export default function BasePanel({ droneBase, onClose, onDroneClick }) {
       </div>
 
       <div className="mt-auto flex flex-col gap-2">
+        {error && (
+          <p className="text-xs font-medium text-red-600 wrap-break-word">
+            {error}
+          </p>
+        )}
+
         <div className="flex gap-3">
           <button className="flex-1 bg-slate-500 hover:bg-slate-600 text-white font-semibold py-2 rounded-lg transition-colors text-sm">
             Rename Base
           </button>
-          <button className="flex-1 bg-[#6a6d9b] hover:bg-[#575a85] text-white font-semibold py-2 rounded-lg transition-colors text-sm">
+          <button
+            onClick={() => run(onToggleStatus)}
+            disabled={busy}
+            className="flex-1 bg-[#6a6d9b] hover:bg-[#575a85] disabled:bg-slate-400 disabled:cursor-not-allowed text-white font-semibold py-2 rounded-lg transition-colors text-sm"
+          >
             {droneBase.status === "offline" ? "Activate" : "Deactivate"}
           </button>
         </div>
@@ -240,7 +296,11 @@ export default function BasePanel({ droneBase, onClose, onDroneClick }) {
         >
           Add Drone
         </button>
-        <button className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 rounded-lg transition-colors text-sm">
+        <button
+          onClick={handleDecommission}
+          disabled={busy}
+          className="w-full bg-red-600 hover:bg-red-700 disabled:bg-slate-400 disabled:cursor-not-allowed text-white font-semibold py-2 rounded-lg transition-colors text-sm"
+        >
           Decommission Base
         </button>
       </div>

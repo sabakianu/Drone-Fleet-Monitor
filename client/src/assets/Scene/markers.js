@@ -93,3 +93,15 @@ export function removeDroneSprite(objectsArray, droneId) {
   sprite.material.map?.dispose();
   sprite.material.dispose();
 }
+
+export function removeBaseMesh(objectsArray, baseId) {
+  const baseMesh = findBaseMesh(objectsArray, baseId);
+  if (!baseMesh) return;
+
+  objectsArray.splice(objectsArray.indexOf(baseMesh), 1);
+  baseMesh.parent?.remove(baseMesh);
+  baseMesh.material.map?.dispose();
+  baseMesh.material.dispose();
+  // spre deosebire de sprite, PlaneGeometry e a lui -> o eliberăm
+  baseMesh.geometry.dispose();
+}

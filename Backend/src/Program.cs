@@ -242,7 +242,9 @@ app.MapPost("/api/bases/{id}/drones", (int id, string type, DroneContext context
 
 app.MapPut("/api/bases/{id}/status", (int id, string status, DroneContext context) =>
 {
-    var droneBase = context.Bases.FirstOrDefault(b => b.Id == id);
+    var droneBase = context.Bases
+        .Include(b => b.Drones)
+        .FirstOrDefault(b => b.Id == id);
 
     if (droneBase == null)
     {
@@ -262,7 +264,9 @@ app.MapPut("/api/bases/{id}/status", (int id, string status, DroneContext contex
 
 app.MapPut("/api/bases/{id}/name", (int id, string name, DroneContext context) =>
 {
-    var droneBase = context.Bases.FirstOrDefault(b => b.Id == id);
+    var droneBase = context.Bases
+        .Include(b => b.Drones)
+        .FirstOrDefault(b => b.Id == id);
 
     if (droneBase == null)
     {
@@ -277,17 +281,29 @@ app.MapPut("/api/bases/{id}/name", (int id, string name, DroneContext context) =
 
 app.MapDelete("/api/bases/{id}", (int id, DroneContext context) =>
 {
-    var droneBase = context.Bases.FirstOrDefault(b => b.Id == id);
+    var droneBase = context.Bases
+        .Include(b => b.Drones)
+        .FirstOrDefault(b => b.Id == id);
 
     if (droneBase == null)
     {
         return Results.NotFound($"Baza cu ID-ul {id} nu a fost găsită.");
     }
 
+    // dronele parcate sunt scoase din uz odată cu baza; cele aflate în zbor
+    // rămân în flotă, doar că nu mai au bază (FK e ON DELETE SET NULL).
+    var parked = droneBase.Drones.Where(d => d.IsInBase).ToList();
+    var destroyedIds = parked.Select(d => d.Id).ToList();
+
+    context.Drones.RemoveRange(parked);
     context.Bases.Remove(droneBase);
     context.SaveChanges();
 
-    return Results.Ok(droneBase);
+    return Results.Ok(new
+    {
+        Base = droneBase,
+        DestroyedDroneIds = destroyedIds,
+    });
 });
 
 app.MapDelete("/api/bases", (DroneContext context) =>

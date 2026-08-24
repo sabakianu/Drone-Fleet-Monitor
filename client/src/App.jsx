@@ -8,6 +8,8 @@ import {
   fetchBase,
   setDroneStatus,
   destroyDrone,
+  setBaseStatus,
+  decommissionBase,
 } from "./assets/api.js";
 import {
   createCamera,
@@ -23,6 +25,7 @@ import {
   findDroneSprite,
   findBaseMesh,
   removeDroneSprite,
+  removeBaseMesh,
 } from "./assets/Scene/markers.js";
 import { setupHover, setupClick } from "./assets/Scene/interactions.js";
 
@@ -31,6 +34,7 @@ export default function App() {
   const [selectedBase, setSelectedBase] = useState(null);
   const mountRef = useRef(null);
   const objectsRef = useRef([]);
+  const globeRef = useRef(null);
 
   // sincronizează drona actualizată în panou, pe glob și în lista bazei
   const applyDroneUpdate = (updated) => {
@@ -76,6 +80,69 @@ export default function App() {
     setSelectedBase((current) =>
       current && current.id === baseId ? refreshed : current,
     );
+  };
+
+  // sincronizează baza actualizată în panou și pe glob
+  const applyBaseUpdate = (updated) => {
+    setSelectedBase((current) =>
+      current && current.id === updated.id ? updated : current,
+    );
+
+    const baseMesh = findBaseMesh(objectsRef.current, updated.id);
+    if (baseMesh) baseMesh.userData.droneBase = updated;
+  };
+
+  const handleToggleBaseStatus = async (droneBase) => {
+    const nextStatus = droneBase.status === "offline" ? "online" : "offline";
+    applyBaseUpdate(await setBaseStatus(droneBase.id, nextStatus));
+  };
+
+  // reciteste flota si aliniaza sprite-urile de pe glob cu ce zice serverul:
+  // sterge ce nu mai exista, adauga ce a decolat, actualizeaza restul
+  const syncDronesFromServer = async () => {
+    const drones = await fetchDrones();
+    const byId = new Map(drones.map((d) => [d.id, d]));
+
+    objectsRef.current
+      .filter(
+        (obj) =>
+          obj.userData.type === "drone" && !byId.has(obj.userData.drone.id),
+      )
+      .forEach((obj) =>
+        removeDroneSprite(objectsRef.current, obj.userData.drone.id),
+      );
+
+    drones.forEach((drone) => {
+      const sprite = findDroneSprite(objectsRef.current, drone.id);
+
+      // dronele parcate in baza nu se randeaza pe glob
+      if (drone.isInBase) {
+        if (sprite) removeDroneSprite(objectsRef.current, drone.id);
+        return;
+      }
+
+      if (sprite) {
+        sprite.userData.drone = drone;
+      } else if (globeRef.current) {
+        spawnDrone(globeRef.current, drone, objectsRef.current);
+      }
+    });
+
+    setSelectedDrone((current) =>
+      current ? (byId.get(current.id) ?? null) : current,
+    );
+  };
+
+  const handleDecommissionBase = async (droneBase) => {
+    // dronele parcate sunt sterse pe server odata cu baza
+    await decommissionBase(droneBase.id);
+
+    removeBaseMesh(objectsRef.current, droneBase.id);
+    setSelectedBase((current) =>
+      current && current.id === droneBase.id ? null : current,
+    );
+
+    await syncDronesFromServer();
   };
 
   useEffect(() => {
@@ -131,6 +198,7 @@ export default function App() {
       .then(([globe, droneList, baseList]) => {
         if (disposed) return;
 
+        globeRef.current = globe;
         setupGlobeRotation(globe, renderer);
         resizeManager.setGlobe(globe);
 
@@ -145,6 +213,7 @@ export default function App() {
 
     return () => {
       disposed = true;
+      globeRef.current = null;
       stopAnimation();
       resizeManager.cleanup();
       hoverManager.cleanup();
@@ -178,6 +247,8 @@ export default function App() {
           droneBase={selectedBase}
           onClose={() => setSelectedBase(null)}
           onDroneClick={setSelectedDrone}
+          onToggleStatus={handleToggleBaseStatus}
+          onDecommission={handleDecommissionBase}
         />
       )}
     </div>
