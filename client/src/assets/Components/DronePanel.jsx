@@ -1,15 +1,48 @@
+import { useState } from "react";
 import CloseButton from "../Icons/CloseButton.png";
 import BatteryIcon from "../Icons/Battery.png";
 import LocationIcon from "../Icons/Location.png";
 import AltitudeIcon from "../Icons/Altitude.png";
 import { resolveImage } from "../images.js";
 
-export default function DronePanel({ drone, onClose }) {
+export default function DronePanel({
+  drone,
+  onClose,
+  onToggleStatus,
+  onDestroy,
+}) {
   const batteryMah = Math.round(
     (drone.batteryLevel / 100) * drone.batteryCapacity,
   );
 
   const droneImg = resolveImage(drone.imagePath);
+
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+
+  // blocheaza butoanele cat timp requestul e in zbor si arata eroarea daca pica
+  const run = async (action) => {
+    setBusy(true);
+    setError(null);
+
+    try {
+      await action(drone);
+    } catch (err) {
+      console.error(err);
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleDestroy = () => {
+    const label = drone.name || `Drone #${drone.id}`;
+    if (!window.confirm(`Destroy ${label}? Aceasta actiune e ireversibila.`)) {
+      return;
+    }
+
+    run(onDestroy);
+  };
 
   return (
     <div className="absolute top-3.5 bottom-4.5 left-2.25 w-80 z-50 bg-zinc-200 shadow-xl rounded-xl p-3 border-2 border-zinc-300 flex flex-col">
@@ -145,11 +178,21 @@ export default function DronePanel({ drone, onClose }) {
       </div>
 
       <div className="mt-auto flex flex-col gap-2">
+        {error && (
+          <p className="text-xs font-medium text-red-600 wrap-break-word">
+            {error}
+          </p>
+        )}
+
         <div className="flex gap-3">
           <button className="flex-1 bg-slate-500 hover:bg-slate-600 text-white font-semibold py-2 rounded-lg transition-colors text-sm">
             Rename
           </button>
-          <button className="flex-1 bg-[#6a6d9b] hover:bg-[#575a85] text-white font-semibold py-2 rounded-lg transition-colors text-sm">
+          <button
+            onClick={() => run(onToggleStatus)}
+            disabled={busy}
+            className="flex-1 bg-[#6a6d9b] hover:bg-[#575a85] disabled:bg-slate-400 disabled:cursor-not-allowed text-white font-semibold py-2 rounded-lg transition-colors text-sm"
+          >
             {drone.status === "offline" ? "Turn On" : "Turn Off"}
           </button>
         </div>
@@ -157,7 +200,11 @@ export default function DronePanel({ drone, onClose }) {
           <button className="flex-1 bg-slate-700 hover:bg-slate-800 text-white font-semibold py-2 rounded-lg transition-colors text-sm">
             Move
           </button>
-          <button className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 rounded-lg transition-colors text-sm">
+          <button
+            onClick={handleDestroy}
+            disabled={busy}
+            className="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-slate-400 disabled:cursor-not-allowed text-white font-semibold py-2 rounded-lg transition-colors text-sm"
+          >
             Destroy
           </button>
         </div>

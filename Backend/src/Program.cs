@@ -85,6 +85,28 @@ app.MapGet("/api/drones/{id}", (int id, DroneContext context) =>
     return Results.NotFound($"Drona cu ID-ul {id} nu a fost găsită.");
 });
 
+app.MapPut("/api/drones/{id}/status", (int id, string status, DroneContext context) =>
+{
+    var drone = context.Drones
+        .Include(d => d.HomeBase)
+        .FirstOrDefault(d => d.Id == id);
+
+    if (drone == null)
+    {
+        return Results.NotFound($"Drona cu ID-ul {id} nu a fost găsită.");
+    }
+
+    if (status.ToLower() != "online" && status.ToLower() != "offline")
+    {
+        return Results.BadRequest("Status invalid. Acceptate: online, offline.");
+    }
+
+    drone.Status = status.ToLower();
+    context.SaveChanges();
+
+    return Results.Ok(drone);
+});
+
 app.MapDelete("/api/drones/{id}", (int id, DroneContext context) =>
 {
     var drone = context.Drones.FirstOrDefault(d => d.Id == id);

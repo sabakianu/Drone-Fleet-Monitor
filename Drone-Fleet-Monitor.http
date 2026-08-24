@@ -51,6 +51,13 @@ POST {{Drone_Fleet_Monitor_HostAddress}}/api/drones/add?type=mq9reaper
 # CombatDrone
 POST {{Drone_Fleet_Monitor_HostAddress}}/api/drones/add?type=bayraktarakinci
 
+### ─────────────── PUT ───────────────
+
+PUT {{Drone_Fleet_Monitor_HostAddress}}/api/drones/1/status?status=online
+
+###
+PUT {{Drone_Fleet_Monitor_HostAddress}}/api/drones/1/status?status=offline
+
 ### ────────────── DELETE ──────────────
 
 DELETE {{Drone_Fleet_Monitor_HostAddress}}/api/drones/1
