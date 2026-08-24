@@ -27,6 +27,7 @@ export default function BasePanel({
   droneBase,
   onClose,
   onDroneClick,
+  onRename,
   onToggleStatus,
   onDecommission,
 }) {
@@ -279,7 +280,11 @@ export default function BasePanel({
         )}
 
         <div className="flex gap-3">
-          <button className="flex-1 bg-slate-500 hover:bg-slate-600 text-white font-semibold py-2 rounded-lg transition-colors text-sm">
+          <button
+            onClick={() => onRename(droneBase)}
+            disabled={busy}
+            className="flex-1 bg-slate-500 hover:bg-slate-600 disabled:bg-slate-400 disabled:cursor-not-allowed text-white font-semibold py-2 rounded-lg transition-colors text-sm"
+          >
             Rename Base
           </button>
           <button

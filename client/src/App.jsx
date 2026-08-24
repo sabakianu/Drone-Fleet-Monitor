@@ -2,13 +2,16 @@ import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import DronePanel from "./assets/Components/DronePanel.jsx";
 import BasePanel from "./assets/Components/BasePanel.jsx";
+import RenamePanel from "./assets/Components/RenamePanel.jsx";
 import {
   fetchDrones,
   fetchBases,
   fetchBase,
   setDroneStatus,
+  setDroneName,
   destroyDrone,
   setBaseStatus,
+  setBaseName,
   decommissionBase,
 } from "./assets/api.js";
 import {
@@ -32,6 +35,8 @@ import { setupHover, setupClick } from "./assets/Scene/interactions.js";
 export default function App() {
   const [selectedDrone, setSelectedDrone] = useState(null);
   const [selectedBase, setSelectedBase] = useState(null);
+
+  const [renameTarget, setRenameTarget] = useState(null);
   const mountRef = useRef(null);
   const objectsRef = useRef([]);
   const globeRef = useRef(null);
@@ -58,6 +63,38 @@ export default function App() {
   const handleToggleDroneStatus = async (drone) => {
     const nextStatus = drone.status === "offline" ? "online" : "offline";
     applyDroneUpdate(await setDroneStatus(drone.id, nextStatus));
+  };
+
+  const openRenameDrone = (drone) => {
+    setRenameTarget({
+      kind: "drone",
+      entity: drone,
+      title: "Rename Drone",
+      currentName: drone.name,
+      placeholder: `Drone #${drone.id}`,
+    });
+  };
+
+  const openRenameBase = (droneBase) => {
+    setRenameTarget({
+      kind: "base",
+      entity: droneBase,
+      title: "Rename Base",
+      currentName: droneBase.name,
+      placeholder: `Base #${droneBase.id}`,
+    });
+  };
+
+  const handleRenameConfirm = async (name) => {
+    const { kind, entity } = renameTarget;
+
+    if (kind === "drone") {
+      applyDroneUpdate(await setDroneName(entity.id, name));
+    } else {
+      applyBaseUpdate(await setBaseName(entity.id, name));
+    }
+
+    setRenameTarget(null);
   };
 
   const handleDestroyDrone = async (drone) => {
@@ -237,6 +274,7 @@ export default function App() {
         <DronePanel
           drone={selectedDrone}
           onClose={() => setSelectedDrone(null)}
+          onRename={openRenameDrone}
           onToggleStatus={handleToggleDroneStatus}
           onDestroy={handleDestroyDrone}
         />
@@ -247,8 +285,19 @@ export default function App() {
           droneBase={selectedBase}
           onClose={() => setSelectedBase(null)}
           onDroneClick={setSelectedDrone}
+          onRename={openRenameBase}
           onToggleStatus={handleToggleBaseStatus}
           onDecommission={handleDecommissionBase}
+        />
+      )}
+
+      {renameTarget && (
+        <RenamePanel
+          title={renameTarget.title}
+          currentName={renameTarget.currentName}
+          placeholder={renameTarget.placeholder}
+          onCancel={() => setRenameTarget(null)}
+          onConfirm={handleRenameConfirm}
         />
       )}
     </div>

@@ -25,12 +25,26 @@ export function setDroneStatus(id, status) {
   return request("PUT", `/api/drones/${id}/status?status=${status}`);
 }
 
+export function setDroneName(id, name) {
+  return request(
+    "PUT",
+    `/api/drones/${id}/name?name=${encodeURIComponent(name)}`,
+  );
+}
+
 export function destroyDrone(id) {
   return request("DELETE", `/api/drones/${id}`);
 }
 
 export function setBaseStatus(id, status) {
   return request("PUT", `/api/bases/${id}/status?status=${status}`);
+}
+
+export function setBaseName(id, name) {
+  return request(
+    "PUT",
+    `/api/bases/${id}/name?name=${encodeURIComponent(name)}`,
+  );
 }
 
 export function decommissionBase(id) {

@@ -107,6 +107,28 @@ app.MapPut("/api/drones/{id}/status", (int id, string status, DroneContext conte
     return Results.Ok(drone);
 });
 
+app.MapPut("/api/drones/{id}/name", (int id, string name, DroneContext context) =>
+{
+    var drone = context.Drones
+        .Include(d => d.HomeBase)
+        .FirstOrDefault(d => d.Id == id);
+
+    if (drone == null)
+    {
+        return Results.NotFound($"Drona cu ID-ul {id} nu a fost găsită.");
+    }
+
+    if (string.IsNullOrWhiteSpace(name))
+    {
+        return Results.BadRequest("Numele nu poate fi gol.");
+    }
+
+    drone.Name = name.Trim();
+    context.SaveChanges();
+
+    return Results.Ok(drone);
+});
+
 app.MapDelete("/api/drones/{id}", (int id, DroneContext context) =>
 {
     var drone = context.Drones.FirstOrDefault(d => d.Id == id);
@@ -273,7 +295,12 @@ app.MapPut("/api/bases/{id}/name", (int id, string name, DroneContext context) =
         return Results.NotFound($"Baza cu ID-ul {id} nu a fost găsită.");
     }
 
-    droneBase.Name = name;
+    if (string.IsNullOrWhiteSpace(name))
+    {
+        return Results.BadRequest("Numele nu poate fi gol.");
+    }
+
+    droneBase.Name = name.Trim();
     context.SaveChanges();
 
     return Results.Ok(droneBase);

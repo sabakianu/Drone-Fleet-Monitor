@@ -58,6 +58,9 @@ PUT {{Drone_Fleet_Monitor_HostAddress}}/api/drones/1/status?status=online
 ###
 PUT {{Drone_Fleet_Monitor_HostAddress}}/api/drones/1/status?status=offline
 
+###
+PUT {{Drone_Fleet_Monitor_HostAddress}}/api/drones/1/name?name=Falcon%201
+
 ### ────────────── DELETE ──────────────
 
 DELETE {{Drone_Fleet_Monitor_HostAddress}}/api/drones/1

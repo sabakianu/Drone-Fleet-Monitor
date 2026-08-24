@@ -8,6 +8,7 @@ import { resolveImage } from "../images.js";
 export default function DronePanel({
   drone,
   onClose,
+  onRename,
   onToggleStatus,
   onDestroy,
 }) {
@@ -185,7 +186,11 @@ export default function DronePanel({
         )}
 
         <div className="flex gap-3">
-          <button className="flex-1 bg-slate-500 hover:bg-slate-600 text-white font-semibold py-2 rounded-lg transition-colors text-sm">
+          <button
+            onClick={() => onRename(drone)}
+            disabled={busy}
+            className="flex-1 bg-slate-500 hover:bg-slate-600 disabled:bg-slate-400 disabled:cursor-not-allowed text-white font-semibold py-2 rounded-lg transition-colors text-sm"
+          >
             Rename
           </button>
           <button
