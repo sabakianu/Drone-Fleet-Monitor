@@ -260,7 +260,7 @@ export default function BasePanel({
           <ActionButton
             variant="dark"
             onClick={() => onAddDrone(droneBase)}
-            disabled={busy || droneBase.isFull}
+            disabled={busy || droneBase.isFull || droneBase.isParkingFull}
           >
             Add Drone
           </ActionButton>

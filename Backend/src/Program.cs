@@ -264,7 +264,7 @@ app.MapPost("/api/bases/add", (NewBaseRequest request, DroneContext context) =>
     return Results.Ok(newBase);
 });
 
-app.MapPost("/api/bases/{id}/drones", (int id, string type, DroneContext context) =>
+app.MapPost("/api/bases/{id}/drones", (int id, string type, string? name, DroneContext context) =>
 {
     var droneBase = context.Bases
         .Include(b => b.Drones)
@@ -311,6 +311,9 @@ app.MapPost("/api/bases/{id}/drones", (int id, string type, DroneContext context
         droneBase.CurrentLocation.Latitude,
         droneBase.CurrentLocation.Longitude,
         0f);
+
+    newDrone.BatteryLevel = 100f;
+    newDrone.Name = name?.Trim() ?? "";
 
     droneBase.Drones.Add(newDrone);
     droneBase.ParkedDrones.Add(newDrone);

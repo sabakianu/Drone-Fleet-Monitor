@@ -41,6 +41,15 @@ export function destroyDrone(id) {
   return request("DELETE", `/api/drones/${id}`);
 }
 
+export function addDrone(baseId, model, name = "") {
+  const nameParam = name ? `&name=${encodeURIComponent(name)}` : "";
+
+  return request(
+    "POST",
+    `/api/bases/${baseId}/drones?type=${encodeURIComponent(model)}${nameParam}`,
+  );
+}
+
 export function setBaseStatus(id, status) {
   return request("PUT", `/api/bases/${id}/status?status=${status}`);
 }
