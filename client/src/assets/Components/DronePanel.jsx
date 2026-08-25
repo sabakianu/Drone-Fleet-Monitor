@@ -1,8 +1,8 @@
-import { useState } from "react";
 import BatteryIcon from "../Icons/Battery.png";
 import LocationIcon from "../Icons/Location.png";
 import AltitudeIcon from "../Icons/Altitude.png";
 import { resolveImage } from "../images.js";
+import useAction from "../useAction.js";
 import ActionButton, { ActionRow } from "./UI/ActionButton.jsx";
 import Panel, { PanelFooter } from "./UI/Panel.jsx";
 
@@ -19,23 +19,7 @@ export default function DronePanel({
 
   const droneImg = resolveImage(drone.imagePath);
 
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState(null);
-
-  // blocheaza butoanele cat timp requestul e in zbor si arata eroarea daca pica
-  const run = async (action) => {
-    setBusy(true);
-    setError(null);
-
-    try {
-      await action(drone);
-    } catch (err) {
-      console.error(err);
-      setError(err.message);
-    } finally {
-      setBusy(false);
-    }
-  };
+  const { busy, error, run } = useAction();
 
   return (
     <Panel
@@ -152,7 +136,7 @@ export default function DronePanel({
           </ActionButton>
           <ActionButton
             variant="accent"
-            onClick={() => run(onToggleStatus)}
+            onClick={() => run(onToggleStatus, drone)}
             disabled={busy}
           >
             {drone.status === "offline" ? "Turn On" : "Turn Off"}

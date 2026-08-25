@@ -3,6 +3,7 @@ import LocationIcon from "../Icons/Location.png";
 import BatteryIcon from "../Icons/Battery.png";
 import RelocateIcon from "../Icons/Relocate.png";
 import { resolveImage } from "../images.js";
+import useAction from "../useAction.js";
 import ActionButton, { ActionRow } from "./UI/ActionButton.jsx";
 import IconButton from "./UI/IconButton.jsx";
 import Panel, { PanelFooter } from "./UI/Panel.jsx";
@@ -57,23 +58,7 @@ export default function BasePanel({
       (current) => (current + step + DRONE_VIEWS.length) % DRONE_VIEWS.length,
     );
 
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState(null);
-
-  // blocheaza butoanele cat timp requestul e in zbor si arata eroarea daca pica
-  const run = async (action) => {
-    setBusy(true);
-    setError(null);
-
-    try {
-      await action(droneBase);
-    } catch (err) {
-      console.error(err);
-      setError(err.message);
-    } finally {
-      setBusy(false);
-    }
-  };
+  const { busy, error, run } = useAction();
 
   return (
     <Panel
@@ -248,7 +233,7 @@ export default function BasePanel({
                   disabled={busy}
                   onClick={(event) => {
                     event.stopPropagation();
-                    run(() => onRelocateDrone(drone));
+                    run(onRelocateDrone, drone);
                   }}
                 />
               </div>
@@ -264,7 +249,7 @@ export default function BasePanel({
           </ActionButton>
           <ActionButton
             variant="accent"
-            onClick={() => run(onToggleStatus)}
+            onClick={() => run(onToggleStatus, droneBase)}
             disabled={busy}
           >
             {droneBase.status === "offline" ? "Activate" : "Deactivate"}
