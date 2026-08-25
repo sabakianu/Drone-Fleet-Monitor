@@ -1,6 +1,5 @@
 import { useState } from "react";
-import CancelIcon from "../Icons/Cancel.png";
-import OkeyIcon from "../Icons/Okey.png";
+import DialogActions from "./UI/DialogActions.jsx";
 
 export default function RenamePanel({
   title = "Rename",
@@ -64,33 +63,11 @@ export default function RenamePanel({
           </p>
         )}
 
-        <div className="flex justify-end gap-3 mt-4">
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={busy}
-            className="disabled:cursor-not-allowed inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-white border-2 border-[#9b6a6d] text-[#85575a] hover:bg-[#9b6a6d]/10 transition-colors"
-          >
-            Cancel
-            <img
-              src={CancelIcon}
-              alt=""
-              className="w-4 h-4 object-contain shrink-0"
-            />
-          </button>
-          <button
-            type="submit"
-            disabled={trimmed.length === 0 || busy}
-            className="group inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-white border-2 border-[#6d9b6a] text-[#57855a] hover:bg-[#6d9b6a]/10 disabled:border-slate-300 disabled:text-slate-400 disabled:hover:bg-white disabled:cursor-not-allowed transition-colors"
-          >
-            OK
-            <img
-              src={OkeyIcon}
-              alt=""
-              className="w-4 h-4 object-contain shrink-0 group-disabled:opacity-40"
-            />
-          </button>
-        </div>
+        <DialogActions
+          onCancel={onCancel}
+          busy={busy}
+          confirmDisabled={trimmed.length === 0}
+        />
       </form>
     </div>
   );

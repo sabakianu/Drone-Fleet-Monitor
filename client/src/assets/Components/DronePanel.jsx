@@ -4,6 +4,8 @@ import BatteryIcon from "../Icons/Battery.png";
 import LocationIcon from "../Icons/Location.png";
 import AltitudeIcon from "../Icons/Altitude.png";
 import { resolveImage } from "../images.js";
+import ActionButton, { ActionRow } from "./UI/ActionButton.jsx";
+import IconButton from "./UI/IconButton.jsx";
 
 export default function DronePanel({
   drone,
@@ -56,16 +58,7 @@ export default function DronePanel({
             Model: {drone.model}
           </h2>
         </div>
-        <button
-          onClick={onClose}
-          className="text-slate-500 hover:text-slate-800 font-bold px-2 py-1 rounded-lg hover:bg-slate-300/60 transition-colors"
-        >
-          <img
-            src={CloseButton}
-            alt="Close"
-            className="w-6 h-6 object-contain opacity-70 hover:opacity-100"
-          />
-        </button>
+        <IconButton icon={CloseButton} label="Close" onClick={onClose} />
       </div>
 
       <div className="h-36 w-full overflow-hidden rounded-lg">
@@ -185,34 +178,28 @@ export default function DronePanel({
           </p>
         )}
 
-        <div className="flex gap-3">
-          <button
-            onClick={() => onRename(drone)}
-            disabled={busy}
-            className="flex-1 bg-slate-500 hover:bg-slate-600 disabled:bg-slate-400 disabled:cursor-not-allowed text-white font-semibold py-2 rounded-lg transition-colors text-sm"
-          >
+        <ActionRow>
+          <ActionButton onClick={() => onRename(drone)} disabled={busy}>
             Rename
-          </button>
-          <button
+          </ActionButton>
+          <ActionButton
+            variant="accent"
             onClick={() => run(onToggleStatus)}
             disabled={busy}
-            className="flex-1 bg-[#6a6d9b] hover:bg-[#575a85] disabled:bg-slate-400 disabled:cursor-not-allowed text-white font-semibold py-2 rounded-lg transition-colors text-sm"
           >
             {drone.status === "offline" ? "Turn On" : "Turn Off"}
-          </button>
-        </div>
-        <div className="flex gap-3">
-          <button className="flex-1 bg-slate-700 hover:bg-slate-800 text-white font-semibold py-2 rounded-lg transition-colors text-sm">
-            Move
-          </button>
-          <button
+          </ActionButton>
+        </ActionRow>
+        <ActionRow>
+          <ActionButton variant="dark">Move</ActionButton>
+          <ActionButton
+            variant="danger"
             onClick={handleDestroy}
             disabled={busy}
-            className="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-slate-400 disabled:cursor-not-allowed text-white font-semibold py-2 rounded-lg transition-colors text-sm"
           >
             Destroy
-          </button>
-        </div>
+          </ActionButton>
+        </ActionRow>
       </div>
     </div>
   );

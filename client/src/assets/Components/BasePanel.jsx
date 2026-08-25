@@ -4,6 +4,8 @@ import LocationIcon from "../Icons/Location.png";
 import BatteryIcon from "../Icons/Battery.png";
 import RelocateIcon from "../Icons/Relocate.png";
 import { resolveImage } from "../images.js";
+import ActionButton, { ActionRow } from "./UI/ActionButton.jsx";
+import IconButton from "./UI/IconButton.jsx";
 
 const DRONE_VIEWS = [
   {
@@ -104,16 +106,7 @@ export default function BasePanel({
             {droneBase.name || `Base #${droneBase.id}`}
           </h1>
         </div>
-        <button
-          onClick={onClose}
-          className="text-slate-500 hover:text-slate-800 font-bold px-2 py-1 rounded-lg hover:bg-slate-300/60 transition-colors"
-        >
-          <img
-            src={CloseButton}
-            alt="Close"
-            className="w-6 h-6 object-contain opacity-70 hover:opacity-100"
-          />
-        </button>
+        <IconButton icon={CloseButton} label="Close" onClick={onClose} />
       </div>
 
       <div className="h-36 w-full overflow-hidden rounded-lg">
@@ -219,13 +212,13 @@ export default function BasePanel({
       <div className="flex-1 min-h-0 flex flex-col mb-4">
         {/* switcher intre cele 3 liste */}
         <div className="flex items-center justify-between mb-2">
-          <button
+          <IconButton
+            label="Previous list"
+            className="px-2 py-0.5"
             onClick={() => cycleView(-1)}
-            aria-label="Previous list"
-            className="px-2 py-0.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-300/60 transition-colors font-bold"
           >
             ‹
-          </button>
+          </IconButton>
 
           <h3 className="text-sm font-semibold text-slate-700">
             {view.label}{" "}
@@ -234,13 +227,13 @@ export default function BasePanel({
             </span>
           </h3>
 
-          <button
+          <IconButton
+            label="Next list"
+            className="px-2 py-0.5"
             onClick={() => cycleView(1)}
-            aria-label="Next list"
-            className="px-2 py-0.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-300/60 transition-colors font-bold"
           >
             ›
-          </button>
+          </IconButton>
         </div>
 
         {/* Containerul care face scroll dacă sunt prea multe */}
@@ -284,21 +277,17 @@ export default function BasePanel({
                   </span>
                 </div>
 
-                <button
+                <IconButton
+                  icon={RelocateIcon}
+                  label="Relocate drone"
+                  iconClassName="w-4 h-4"
+                  className="p-1"
+                  disabled={busy}
                   onClick={(event) => {
                     event.stopPropagation();
                     run(() => onRelocateDrone(drone));
                   }}
-                  disabled={busy}
-                  aria-label="Relocate drone"
-                  className="p-1 rounded-lg hover:bg-slate-400/40 disabled:cursor-not-allowed transition-colors"
-                >
-                  <img
-                    src={RelocateIcon}
-                    alt="Relocate"
-                    className="w-4 h-4 object-contain opacity-70 hover:opacity-100"
-                  />
-                </button>
+                />
               </div>
             </div>
           ))}
@@ -312,35 +301,32 @@ export default function BasePanel({
           </p>
         )}
 
-        <div className="flex gap-3">
-          <button
-            onClick={() => onRename(droneBase)}
-            disabled={busy}
-            className="flex-1 bg-slate-500 hover:bg-slate-600 disabled:bg-slate-400 disabled:cursor-not-allowed text-white font-semibold py-2 rounded-lg transition-colors text-sm"
-          >
+        <ActionRow>
+          <ActionButton onClick={() => onRename(droneBase)} disabled={busy}>
             Rename Base
-          </button>
-          <button
+          </ActionButton>
+          <ActionButton
+            variant="accent"
             onClick={() => run(onToggleStatus)}
             disabled={busy}
-            className="flex-1 bg-[#6a6d9b] hover:bg-[#575a85] disabled:bg-slate-400 disabled:cursor-not-allowed text-white font-semibold py-2 rounded-lg transition-colors text-sm"
           >
             {droneBase.status === "offline" ? "Activate" : "Deactivate"}
-          </button>
-        </div>
-        <button
-          disabled={droneBase.isFull}
-          className="w-full bg-slate-700 hover:bg-slate-800 disabled:bg-slate-400 disabled:cursor-not-allowed text-white font-semibold py-2 rounded-lg transition-colors text-sm"
-        >
-          Add Drone
-        </button>
-        <button
-          onClick={handleDecommission}
-          disabled={busy}
-          className="w-full bg-red-600 hover:bg-red-700 disabled:bg-slate-400 disabled:cursor-not-allowed text-white font-semibold py-2 rounded-lg transition-colors text-sm"
-        >
-          Decommission Base
-        </button>
+          </ActionButton>
+        </ActionRow>
+        <ActionRow>
+          <ActionButton variant="dark" disabled={droneBase.isFull}>
+            Add Drone
+          </ActionButton>
+        </ActionRow>
+        <ActionRow>
+          <ActionButton
+            variant="danger"
+            onClick={handleDecommission}
+            disabled={busy}
+          >
+            Decommission Base
+          </ActionButton>
+        </ActionRow>
       </div>
     </div>
   );
