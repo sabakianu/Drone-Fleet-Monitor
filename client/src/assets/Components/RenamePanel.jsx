@@ -13,7 +13,6 @@ export default function RenamePanel({
   const [error, setError] = useState(null);
   const trimmed = name.trim();
 
-  // daca onConfirm pica, dialogul ramane deschis si arata eroarea
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (trimmed.length === 0 || busy) return;
@@ -54,7 +53,7 @@ export default function RenamePanel({
           placeholder={placeholder}
           maxLength={40}
           disabled={busy}
-          className="w-full bg-zinc-100 border-2 border-zinc-300 rounded-lg px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#6a6d9b] disabled:text-slate-400 transition-colors"
+          className="w-full bg-zinc-100 border-2 border-zinc-300 rounded-lg px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-accent disabled:text-slate-400 transition-colors"
         />
 
         {error && (

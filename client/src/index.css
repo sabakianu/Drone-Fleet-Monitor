@@ -1,5 +1,16 @@
 @import "tailwindcss";
 
+:root {
+  --color-accent: #6a6d9b;
+  --color-accent-deep: #575a85;
+
+  --color-confirm: #6d9b6a;
+  --color-confirm-deep: #57855a;
+
+  --color-cancel: #9b6a6d;
+  --color-cancel-deep: #85575a;
+}
+
 html,
 body,
 #root {

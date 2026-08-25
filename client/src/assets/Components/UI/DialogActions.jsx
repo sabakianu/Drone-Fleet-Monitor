@@ -15,7 +15,7 @@ export default function DialogActions({
         type="button"
         onClick={onCancel}
         disabled={busy}
-        className="disabled:cursor-not-allowed inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-white border-2 border-[#9b6a6d] text-[#85575a] hover:bg-[#9b6a6d]/10 transition-colors"
+        className="disabled:cursor-not-allowed inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-white border-2 border-cancel text-cancel-deep hover:bg-cancel/10 transition-colors"
       >
         {cancelLabel}
         <img
@@ -27,7 +27,7 @@ export default function DialogActions({
       <button
         type="submit"
         disabled={busy || confirmDisabled}
-        className="group inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-white border-2 border-[#6d9b6a] text-[#57855a] hover:bg-[#6d9b6a]/10 disabled:border-slate-300 disabled:text-slate-400 disabled:hover:bg-white disabled:cursor-not-allowed transition-colors"
+        className="group inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-white border-2 border-confirm text-confirm-deep hover:bg-confirm/10 disabled:border-slate-300 disabled:text-slate-400 disabled:hover:bg-white disabled:cursor-not-allowed transition-colors"
       >
         {confirmLabel}
         <img

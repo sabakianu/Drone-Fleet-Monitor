@@ -33,6 +33,7 @@ import {
 } from "./assets/Scene/markers.js";
 import { setupHover, setupClick } from "./assets/Scene/interactions.js";
 import RelocatePanel from "./assets/Components/RelocatePanel.jsx";
+import ConfirmPanel from "./assets/Components/ConfirmPanel.jsx";
 
 export default function App() {
   const [selectedDrone, setSelectedDrone] = useState(null);
@@ -41,6 +42,13 @@ export default function App() {
   const [renameTarget, setRenameTarget] = useState(null);
 
   const [relocateTarget, setRelocateTarget] = useState(null);
+
+  const [confirmTarget, setConfirmTarget] = useState(null);
+
+  const handleConfirm = async () => {
+    await confirmTarget.action();
+    setConfirmTarget(null);
+  };
   const mountRef = useRef(null);
   const objectsRef = useRef([]);
   const globeRef = useRef(null);
@@ -131,6 +139,17 @@ export default function App() {
     await refreshBases(drone.droneBaseId, baseId, updated.parkedAtBaseId);
   };
 
+  const askDestroyDrone = (drone) => {
+    const label = drone.name || `Drone #${drone.id}`;
+
+    setConfirmTarget({
+      title: "Destroy Drone",
+      message: `${label} will be removed from the fleet. This cannot be undone.`,
+      confirmLabel: "Destroy",
+      action: () => handleDestroyDrone(drone),
+    });
+  };
+
   const handleDestroyDrone = async (drone) => {
     await destroyDrone(drone.id);
 
@@ -191,6 +210,31 @@ export default function App() {
     setSelectedDrone((current) =>
       current ? (byId.get(current.id) ?? null) : current,
     );
+  };
+
+  const askDecommissionBase = (droneBase) => {
+    const label = droneBase.name || `Base #${droneBase.id}`;
+
+    const ownParked = droneBase.dronesInBaseCount;
+    const visitors = droneBase.parkedCount - ownParked;
+
+    const effects = [];
+    if (ownParked > 0) {
+      effects.push(`its ${ownParked} parked drones will be destroyed`);
+    }
+    if (visitors > 0) {
+      effects.push(`${visitors} visiting drones will take off`);
+    }
+
+    const warning =
+      effects.length > 0 ? ` If you go on, ${effects.join("; ")}.` : "";
+
+    setConfirmTarget({
+      title: "Decommission Base",
+      message: `${label} will be taken off the map.${warning}`,
+      confirmLabel: "Decommission",
+      action: () => handleDecommissionBase(droneBase),
+    });
   };
 
   const handleDecommissionBase = async (droneBase) => {
@@ -299,7 +343,7 @@ export default function App() {
           onClose={() => setSelectedDrone(null)}
           onRename={openRenameDrone}
           onToggleStatus={handleToggleDroneStatus}
-          onDestroy={handleDestroyDrone}
+          onDestroy={askDestroyDrone}
         />
       )}
 
@@ -311,7 +355,7 @@ export default function App() {
           onRename={openRenameBase}
           onRelocateDrone={openRelocateDrone}
           onToggleStatus={handleToggleBaseStatus}
-          onDecommission={handleDecommissionBase}
+          onDecommission={askDecommissionBase}
         />
       )}
 
@@ -331,6 +375,16 @@ export default function App() {
           bases={relocateTarget.bases}
           onCancel={() => setRelocateTarget(null)}
           onConfirm={handleRelocateConfirm}
+        />
+      )}
+
+      {confirmTarget && (
+        <ConfirmPanel
+          title={confirmTarget.title}
+          message={confirmTarget.message}
+          confirmLabel={confirmTarget.confirmLabel}
+          onCancel={() => setConfirmTarget(null)}
+          onConfirm={handleConfirm}
         />
       )}
     </div>

@@ -3,7 +3,6 @@ import DialogActions from "./UI/DialogActions.jsx";
 
 const EARTH_RADIUS_KM = 6371;
 
-// haversine: distanta pe suprafata globului intre doua coordonate
 function distanceKm(from, to) {
   const toRad = (deg) => (deg * Math.PI) / 180;
 
@@ -112,7 +111,7 @@ export default function RelocatePanel({ drone, bases, onCancel, onConfirm }) {
                 onClick={() => setSelectedId(base.id)}
                 className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg border-2 text-left transition-colors disabled:cursor-not-allowed ${
                   selected
-                    ? "bg-[#6a6d9b]/10 border-[#6a6d9b]"
+                    ? "bg-accent/10 border-accent"
                     : "bg-white border-zinc-300 hover:border-slate-400 disabled:bg-zinc-100 disabled:border-zinc-200 disabled:hover:border-zinc-200"
                 }`}
               >
@@ -131,7 +130,7 @@ export default function RelocatePanel({ drone, bases, onCancel, onConfirm }) {
                   >
                     {base.category} · {base.droneCount}/{base.maxDroneCapacity}
                     {base.blocked && (
-                      <span className="ml-1 font-bold text-[#9b6a6d]">
+                      <span className="ml-1 font-bold text-cancel">
                         {base.reason}
                       </span>
                     )}

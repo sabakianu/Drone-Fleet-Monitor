@@ -1,11 +1,11 @@
 import { useState } from "react";
-import CloseButton from "../Icons/CloseButton.png";
 import LocationIcon from "../Icons/Location.png";
 import BatteryIcon from "../Icons/Battery.png";
 import RelocateIcon from "../Icons/Relocate.png";
 import { resolveImage } from "../images.js";
 import ActionButton, { ActionRow } from "./UI/ActionButton.jsx";
 import IconButton from "./UI/IconButton.jsx";
+import Panel, { PanelFooter } from "./UI/Panel.jsx";
 
 const DRONE_VIEWS = [
   {
@@ -75,52 +75,15 @@ export default function BasePanel({
     }
   };
 
-  const handleDecommission = () => {
-    const label = droneBase.name || `Base #${droneBase.id}`;
-
-    const ownParked = droneBase.dronesInBaseCount;
-    const visitors = droneBase.parkedCount - ownParked;
-
-    const effects = [];
-    if (ownParked > 0) {
-      effects.push(`its ${ownParked} parked drones will be destroyed`);
-    }
-    if (visitors > 0) {
-      effects.push(`${visitors} visiting drones will take off`);
-    }
-
-    const warning = effects.length > 0 ? ` ${effects.join("; ")}.` : "";
-
-    if (!window.confirm(`Decommission ${label}?${warning}`)) {
-      return;
-    }
-
-    run(onDecommission);
-  };
-
   return (
-    <div className="absolute top-3.5 bottom-4.5 right-2.25 w-80 z-50 bg-zinc-200 shadow-xl rounded-xl p-3 border-2 border-zinc-300 flex flex-col">
-      <div className="relative flex items-center justify-between mb-4">
-        <div>
-          <h1 className="text-xl text-slate-700 font-semibold">
-            {droneBase.name || `Base #${droneBase.id}`}
-          </h1>
-        </div>
-        <IconButton icon={CloseButton} label="Close" onClick={onClose} />
-      </div>
-
-      <div className="h-36 w-full overflow-hidden rounded-lg">
-        <img
-          src={baseImg}
-          alt={`${droneBase.category} Base`}
-          className="w-full h-full object-cover"
-        />
-      </div>
-
-      <div className="text-sm text-slate-500 font-medium text-center mb-4">
-        {droneBase.category} Base
-      </div>
-
+    <Panel
+      side="right"
+      title={droneBase.name || `Base #${droneBase.id}`}
+      image={baseImg}
+      imageAlt={`${droneBase.category} Base`}
+      caption={`${droneBase.category} Base`}
+      onClose={onClose}
+    >
       {/* locatie */}
       <div className="flex flex-col gap-3 mb-4">
         <div>
@@ -294,13 +257,7 @@ export default function BasePanel({
         </div>
       </div>
 
-      <div className="mt-auto flex flex-col gap-2">
-        {error && (
-          <p className="text-xs font-medium text-red-600 wrap-break-word">
-            {error}
-          </p>
-        )}
-
+      <PanelFooter error={error}>
         <ActionRow>
           <ActionButton onClick={() => onRename(droneBase)} disabled={busy}>
             Rename Base
@@ -321,13 +278,13 @@ export default function BasePanel({
         <ActionRow>
           <ActionButton
             variant="danger"
-            onClick={handleDecommission}
+            onClick={() => onDecommission(droneBase)}
             disabled={busy}
           >
             Decommission Base
           </ActionButton>
         </ActionRow>
-      </div>
-    </div>
+      </PanelFooter>
+    </Panel>
   );
 }

@@ -1,11 +1,10 @@
 import { useState } from "react";
-import CloseButton from "../Icons/CloseButton.png";
 import BatteryIcon from "../Icons/Battery.png";
 import LocationIcon from "../Icons/Location.png";
 import AltitudeIcon from "../Icons/Altitude.png";
 import { resolveImage } from "../images.js";
 import ActionButton, { ActionRow } from "./UI/ActionButton.jsx";
-import IconButton from "./UI/IconButton.jsx";
+import Panel, { PanelFooter } from "./UI/Panel.jsx";
 
 export default function DronePanel({
   drone,
@@ -38,41 +37,16 @@ export default function DronePanel({
     }
   };
 
-  const handleDestroy = () => {
-    const label = drone.name || `Drone #${drone.id}`;
-    if (!window.confirm(`Destroy ${label}?`)) {
-      return;
-    }
-
-    run(onDestroy);
-  };
-
   return (
-    <div className="absolute top-3.5 bottom-4.5 left-2.25 w-80 z-50 bg-zinc-200 shadow-xl rounded-xl p-3 border-2 border-zinc-300 flex flex-col">
-      <div className="relative flex items-center justify-between mb-4">
-        <div>
-          <h1 className="text-xl text-slate-700 font-semibold">
-            {drone.name || `Drone #${drone.id}`}
-          </h1>
-          <h2 className="text-sm text-slate-500 font-medium">
-            Model: {drone.model}
-          </h2>
-        </div>
-        <IconButton icon={CloseButton} label="Close" onClick={onClose} />
-      </div>
-
-      <div className="h-36 w-full overflow-hidden rounded-lg">
-        <img
-          src={droneImg}
-          alt={drone.model}
-          className="w-full h-full object-cover"
-        />
-      </div>
-
-      <div className="text-sm text-slate-500 font-medium text-center mb-4">
-        {drone.category} {drone.kind} Drone
-      </div>
-
+    <Panel
+      side="left"
+      title={drone.name || `Drone #${drone.id}`}
+      subtitle={`Model: ${drone.model}`}
+      image={droneImg}
+      imageAlt={drone.model}
+      caption={`${drone.category} ${drone.kind} Drone`}
+      onClose={onClose}
+    >
       {/* baterie */}
       <div className="flex items-center gap-2 mb-4">
         <img
@@ -171,13 +145,7 @@ export default function DronePanel({
         </h3>
       </div>
 
-      <div className="mt-auto flex flex-col gap-2">
-        {error && (
-          <p className="text-xs font-medium text-red-600 wrap-break-word">
-            {error}
-          </p>
-        )}
-
+      <PanelFooter error={error}>
         <ActionRow>
           <ActionButton onClick={() => onRename(drone)} disabled={busy}>
             Rename
@@ -194,13 +162,13 @@ export default function DronePanel({
           <ActionButton variant="dark">Move</ActionButton>
           <ActionButton
             variant="danger"
-            onClick={handleDestroy}
+            onClick={() => onDestroy(drone)}
             disabled={busy}
           >
             Destroy
           </ActionButton>
         </ActionRow>
-      </div>
-    </div>
+      </PanelFooter>
+    </Panel>
   );
 }

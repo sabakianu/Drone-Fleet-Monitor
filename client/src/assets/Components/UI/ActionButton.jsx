@@ -1,7 +1,7 @@
 // butoanele late din josul panourilor (Rename, Turn On, Destroy, ...)
 const VARIANTS = {
   neutral: "bg-slate-500 hover:bg-slate-600",
-  accent: "bg-[#6a6d9b] hover:bg-[#575a85]",
+  accent: "bg-accent hover:bg-accent-deep",
   dark: "bg-slate-700 hover:bg-slate-800",
   danger: "bg-red-600 hover:bg-red-700",
 };
