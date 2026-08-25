@@ -20,7 +20,6 @@ export default function ActionButton({
   );
 }
 
-// randul care le tine: unul singur intr-un rand iese pe toata latimea
 export function ActionRow({ children }) {
   return <div className="flex gap-3">{children}</div>;
 }

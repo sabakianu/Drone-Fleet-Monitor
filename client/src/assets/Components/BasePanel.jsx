@@ -41,6 +41,7 @@ export default function BasePanel({
   onClose,
   onDroneClick,
   onRename,
+  onAddDrone,
   onRelocateDrone,
   onToggleStatus,
   onDecommission,
@@ -256,7 +257,11 @@ export default function BasePanel({
           </ActionButton>
         </ActionRow>
         <ActionRow>
-          <ActionButton variant="dark" disabled={droneBase.isFull}>
+          <ActionButton
+            variant="dark"
+            onClick={() => onAddDrone(droneBase)}
+            disabled={busy || droneBase.isFull}
+          >
             Add Drone
           </ActionButton>
         </ActionRow>

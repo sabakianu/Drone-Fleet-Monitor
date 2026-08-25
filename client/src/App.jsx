@@ -34,6 +34,7 @@ import {
 import { setupHover, setupClick } from "./assets/Scene/interactions.js";
 import RelocatePanel from "./assets/Components/RelocatePanel.jsx";
 import ConfirmPanel from "./assets/Components/ConfirmPanel.jsx";
+import AddDronePanel from "./assets/Components/AddDronePanel.jsx";
 
 export default function App() {
   const [selectedDrone, setSelectedDrone] = useState(null);
@@ -42,6 +43,8 @@ export default function App() {
   const [renameTarget, setRenameTarget] = useState(null);
 
   const [relocateTarget, setRelocateTarget] = useState(null);
+
+  const [addDroneTarget, setAddDroneTarget] = useState(null);
 
   const [confirmTarget, setConfirmTarget] = useState(null);
 
@@ -237,6 +240,12 @@ export default function App() {
     });
   };
 
+  // mock: alegerea nu ajunge inca la POST /api/bases/{id}/drones?type=
+  const handleAddDroneConfirm = async (model) => {
+    console.log("add drone", { baseId: addDroneTarget.droneBase.id, model });
+    setAddDroneTarget(null);
+  };
+
   const handleDecommissionBase = async (droneBase) => {
     // dronele parcate sunt sterse pe server odata cu baza
     await decommissionBase(droneBase.id);
@@ -353,6 +362,7 @@ export default function App() {
           onClose={() => setSelectedBase(null)}
           onDroneClick={setSelectedDrone}
           onRename={openRenameBase}
+          onAddDrone={(droneBase) => setAddDroneTarget({ droneBase })}
           onRelocateDrone={openRelocateDrone}
           onToggleStatus={handleToggleBaseStatus}
           onDecommission={askDecommissionBase}
@@ -375,6 +385,14 @@ export default function App() {
           bases={relocateTarget.bases}
           onCancel={() => setRelocateTarget(null)}
           onConfirm={handleRelocateConfirm}
+        />
+      )}
+
+      {addDroneTarget && (
+        <AddDronePanel
+          droneBase={addDroneTarget.droneBase}
+          onCancel={() => setAddDroneTarget(null)}
+          onConfirm={handleAddDroneConfirm}
         />
       )}
 
