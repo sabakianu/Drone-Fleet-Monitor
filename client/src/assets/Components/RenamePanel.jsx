@@ -37,7 +37,7 @@ export default function RenamePanel({
       <form
         onSubmit={handleSubmit}
         onKeyDown={(event) => event.key === "Escape" && onCancel()}
-        className="w-80 bg-zinc-200 shadow-xl rounded-xl p-3 border-2 border-zinc-300 flex flex-col"
+        className="w-96 bg-zinc-200 shadow-xl rounded-xl p-4 border-2 border-zinc-300 flex flex-col"
       >
         <h1 className="text-xl text-slate-700 font-semibold mb-3">{title}</h1>
 

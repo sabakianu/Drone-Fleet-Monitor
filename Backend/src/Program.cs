@@ -129,6 +129,50 @@ app.MapPut("/api/drones/{id}/name", (int id, string name, DroneContext context) 
     return Results.Ok(drone);
 });
 
+app.MapPut("/api/drones/{id}/base", (int id, int baseId, DroneContext context) =>
+{
+    var drone = context.Drones.FirstOrDefault(d => d.Id == id);
+
+    if (drone == null)
+    {
+        return Results.NotFound($"Drona cu ID-ul {id} nu a fost găsită.");
+    }
+
+    var target = context.Bases
+        .Include(b => b.Drones)
+        .Include(b => b.ParkedDrones)
+        .FirstOrDefault(b => b.Id == baseId);
+
+    if (target == null)
+    {
+        return Results.NotFound($"Baza cu ID-ul {baseId} nu a fost găsită.");
+    }
+
+    if (drone.DroneBaseId == target.Id)
+    {
+        return Results.BadRequest($"Drona aparține deja bazei {target.Name}.");
+    }
+
+    if (drone.Category != target.Category)
+    {
+        return Results.BadRequest(
+            $"O dronă {drone.Category} nu poate fi asignată unei baze {target.Category}.");
+    }
+
+    if (target.IsFull)
+    {
+        return Results.BadRequest(
+            $"Baza {target.Name} e plină ({target.DroneCount}/{target.MaxDroneCapacity}).");
+    }
+
+    drone.DroneBaseId = target.Id;
+    context.SaveChanges();
+
+    context.Entry(drone).Reference(d => d.HomeBase).Load();
+
+    return Results.Ok(drone);
+});
+
 app.MapDelete("/api/drones/{id}", (int id, DroneContext context) =>
 {
     var drone = context.Drones.FirstOrDefault(d => d.Id == id);
@@ -157,6 +201,7 @@ app.MapGet("/api/bases", (DroneContext context) =>
 {
     var bases = context.Bases
         .Include(b => b.Drones)
+        .Include(b => b.ParkedDrones)
         .ToList();
 
     return Results.Ok(bases);
@@ -166,6 +211,7 @@ app.MapGet("/api/bases/civilian", (DroneContext context) =>
 {
     var civilianBases = context.Bases
         .Include(b => b.Drones)
+        .Include(b => b.ParkedDrones)
         .OfType<CivilianBase>()
         .ToList();
 
@@ -176,6 +222,7 @@ app.MapGet("/api/bases/military", (DroneContext context) =>
 {
     var militaryBases = context.Bases
         .Include(b => b.Drones)
+        .Include(b => b.ParkedDrones)
         .OfType<MilitaryBase>()
         .ToList();
 
@@ -186,6 +233,7 @@ app.MapGet("/api/bases/{id}", (int id, DroneContext context) =>
 {
     var droneBase = context.Bases
         .Include(b => b.Drones)
+        .Include(b => b.ParkedDrones)
         .FirstOrDefault(b => b.Id == id);
 
     if (droneBase == null)
@@ -207,6 +255,7 @@ app.MapPost("/api/bases/add", (NewBaseRequest request, DroneContext context) =>
 
     newBase.Name = request.Name;
     newBase.MaxDroneCapacity = request.MaxDroneCapacity;
+    newBase.MaxParkingCapacity = request.MaxParkingCapacity;
     newBase.CurrentLocation.SetLocation(request.Latitude, request.Longitude, 0f);
 
     context.Bases.Add(newBase);
@@ -219,6 +268,7 @@ app.MapPost("/api/bases/{id}/drones", (int id, string type, DroneContext context
 {
     var droneBase = context.Bases
         .Include(b => b.Drones)
+        .Include(b => b.ParkedDrones)
         .FirstOrDefault(b => b.Id == id);
 
     if (droneBase == null)
@@ -230,6 +280,12 @@ app.MapPost("/api/bases/{id}/drones", (int id, string type, DroneContext context
     {
         return Results.BadRequest(
             $"Baza {droneBase.Name} e plină ({droneBase.DroneCount}/{droneBase.MaxDroneCapacity}).");
+    }
+
+    if (droneBase.IsParkingFull)
+    {
+        return Results.BadRequest(
+            $"Parcarea bazei {droneBase.Name} e plină ({droneBase.ParkedCount}/{droneBase.MaxParkingCapacity}).");
     }
 
     BaseDrone newDrone = type.ToLower() switch
@@ -257,6 +313,7 @@ app.MapPost("/api/bases/{id}/drones", (int id, string type, DroneContext context
         0f);
 
     droneBase.Drones.Add(newDrone);
+    droneBase.ParkedDrones.Add(newDrone);
     context.SaveChanges();
 
     return Results.Ok(newDrone);
@@ -266,6 +323,7 @@ app.MapPut("/api/bases/{id}/status", (int id, string status, DroneContext contex
 {
     var droneBase = context.Bases
         .Include(b => b.Drones)
+        .Include(b => b.ParkedDrones)
         .FirstOrDefault(b => b.Id == id);
 
     if (droneBase == null)
@@ -288,6 +346,7 @@ app.MapPut("/api/bases/{id}/name", (int id, string name, DroneContext context) =
 {
     var droneBase = context.Bases
         .Include(b => b.Drones)
+        .Include(b => b.ParkedDrones)
         .FirstOrDefault(b => b.Id == id);
 
     if (droneBase == null)
@@ -310,6 +369,7 @@ app.MapDelete("/api/bases/{id}", (int id, DroneContext context) =>
 {
     var droneBase = context.Bases
         .Include(b => b.Drones)
+        .Include(b => b.ParkedDrones)
         .FirstOrDefault(b => b.Id == id);
 
     if (droneBase == null)
@@ -317,12 +377,23 @@ app.MapDelete("/api/bases/{id}", (int id, DroneContext context) =>
         return Results.NotFound($"Baza cu ID-ul {id} nu a fost găsită.");
     }
 
-    // dronele parcate sunt scoase din uz odată cu baza; cele aflate în zbor
-    // rămân în flotă, doar că nu mai au bază (FK e ON DELETE SET NULL).
-    var parked = droneBase.Drones.Where(d => d.IsInBase).ToList();
-    var destroyedIds = parked.Select(d => d.Id).ToList();
+    var destroyed = droneBase.ParkedDrones
+        .Where(d => d.DroneBaseId == droneBase.Id)
+        .ToList();
 
-    context.Drones.RemoveRange(parked);
+    var released = droneBase.ParkedDrones
+        .Where(d => d.DroneBaseId != droneBase.Id)
+        .ToList();
+
+    foreach (var visitor in released)
+    {
+        visitor.ParkedAtBaseId = null;
+    }
+
+    var destroyedIds = destroyed.Select(d => d.Id).ToList();
+    var releasedIds = released.Select(d => d.Id).ToList();
+
+    context.Drones.RemoveRange(destroyed);
     context.Bases.Remove(droneBase);
     context.SaveChanges();
 
@@ -330,6 +401,7 @@ app.MapDelete("/api/bases/{id}", (int id, DroneContext context) =>
     {
         Base = droneBase,
         DestroyedDroneIds = destroyedIds,
+        ReleasedDroneIds = releasedIds,
     });
 });
 

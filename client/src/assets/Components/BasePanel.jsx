@@ -8,18 +8,28 @@ import { resolveImage } from "../images.js";
 const DRONE_VIEWS = [
   {
     label: "Assigned Drones",
+    source: (base) => base.drones,
     filter: () => true,
     empty: "No drones assigned.",
   },
   {
     label: "Drones In Base",
-    filter: (drone) => drone.isInBase,
+    source: (base) => base.parkedDrones,
+    filter: () => true,
     empty: "No drones in base.",
   },
   {
     label: "Drones In Flight",
-    filter: (drone) => !drone.isInBase,
+    source: (base) => base.drones,
+    filter: (drone) => drone.parkedAtBaseId === null,
     empty: "No drones in flight.",
+  },
+  {
+    label: "Drones Away",
+    source: (base) => base.drones,
+    filter: (drone, base) =>
+      drone.parkedAtBaseId !== null && drone.parkedAtBaseId !== base.id,
+    empty: "No drones parked elsewhere.",
   },
 ];
 
@@ -28,15 +38,17 @@ export default function BasePanel({
   onClose,
   onDroneClick,
   onRename,
+  onRelocateDrone,
   onToggleStatus,
   onDecommission,
 }) {
-  const drones = droneBase.drones ?? [];
   const baseImg = resolveImage(droneBase.imagePath);
 
   const [viewIndex, setViewIndex] = useState(0);
   const view = DRONE_VIEWS[viewIndex];
-  const visibleDrones = drones.filter(view.filter);
+  const visibleDrones = (view.source(droneBase) ?? []).filter((drone) =>
+    view.filter(drone, droneBase),
+  );
 
   const cycleView = (step) =>
     setViewIndex(
@@ -63,12 +75,16 @@ export default function BasePanel({
 
   const handleDecommission = () => {
     const label = droneBase.name || `Base #${droneBase.id}`;
-    const parked = droneBase.dronesInBaseCount;
-    const inFlight = droneBase.dronesInFlightCount;
+
+    const ownParked = droneBase.dronesInBaseCount;
+    const visitors = droneBase.parkedCount - ownParked;
 
     const effects = [];
-    if (parked > 0) {
-      effects.push(`The parked drones will be destroyed`);
+    if (ownParked > 0) {
+      effects.push(`its ${ownParked} parked drones will be destroyed`);
+    }
+    if (visitors > 0) {
+      effects.push(`${visitors} visiting drones will take off`);
     }
 
     const warning = effects.length > 0 ? ` ${effects.join("; ")}.` : "";
@@ -140,7 +156,7 @@ export default function BasePanel({
           </div>
         </div>
 
-        {/* capacitate */}
+        {/* capacitate: drone asignate vs. locuri de parcare */}
         <div>
           <h3 className="text-sm font-semibold text-slate-700 mb-1">
             Capacity:
@@ -149,8 +165,17 @@ export default function BasePanel({
             <span className="font-bold text-slate-800">
               {droneBase.droneCount} / {droneBase.maxDroneCapacity}
             </span>{" "}
-            <span className="text-xs text-slate-500">drones</span>
+            <span className="text-xs text-slate-500">assigned</span>
             {droneBase.isFull && (
+              <span className="ml-2 text-xs font-bold text-red-600">FULL</span>
+            )}
+          </div>
+          <div className="text-sm text-slate-600 pl-7">
+            <span className="font-bold text-slate-800">
+              {droneBase.parkedCount} / {droneBase.maxParkingCapacity}
+            </span>{" "}
+            <span className="text-xs text-slate-500">parked</span>
+            {droneBase.isParkingFull && (
               <span className="ml-2 text-xs font-bold text-red-600">FULL</span>
             )}
           </div>
@@ -178,6 +203,13 @@ export default function BasePanel({
             In flight:{" "}
             <span className="font-bold text-slate-800">
               {droneBase.dronesInFlightCount}
+            </span>
+          </p>
+          <div className="w-px h-3 bg-slate-300"></div>
+          <p>
+            Away:{" "}
+            <span className="font-bold text-slate-800">
+              {droneBase.dronesAwayCount}
             </span>
           </p>
         </div>
@@ -253,9 +285,13 @@ export default function BasePanel({
                 </div>
 
                 <button
-                  onClick={(event) => event.stopPropagation()}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    run(() => onRelocateDrone(drone));
+                  }}
+                  disabled={busy}
                   aria-label="Relocate drone"
-                  className="p-1 rounded-lg hover:bg-slate-400/40 transition-colors"
+                  className="p-1 rounded-lg hover:bg-slate-400/40 disabled:cursor-not-allowed transition-colors"
                 >
                   <img
                     src={RelocateIcon}

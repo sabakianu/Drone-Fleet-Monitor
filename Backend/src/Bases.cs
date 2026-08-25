@@ -8,8 +8,10 @@ namespace Drones
         public string Name { get; set; }
         public Location CurrentLocation { get; set; }
         public int MaxDroneCapacity { get; set; }
+        public int MaxParkingCapacity { get; set; }
         public string Status { get; set; }
         List<BaseDrone> Drones { get; set; }
+        List<BaseDrone> ParkedDrones { get; set; }
     }
 
     public abstract class DroneBase : IDroneBase
@@ -17,12 +19,17 @@ namespace Drones
         public int Id { get; set; }
         public string Name { get; set; } = "";
         public Location CurrentLocation { get; set; } = new Location();
-        public int MaxDroneCapacity { get; set; }
+        public int MaxDroneCapacity { get; set; }      // câte drone pot aparține bazei
+        public int MaxParkingCapacity { get; set; }    // câte drone pot sta parcate în ea
         public string Status { get; set; } = "offline";
 
         public DroneCategory Category { get; private set; }   // discriminator
 
+        // dronele care aparțin bazei (pot fi în zbor sau parcate în altă parte)
         public List<BaseDrone> Drones { get; set; } = new();
+
+        // dronele parcate fizic aici, inclusiv cele ale altor baze
+        public List<BaseDrone> ParkedDrones { get; set; } = new();
 
         [NotMapped]
         public abstract string ImagePath { get; }
@@ -34,10 +41,19 @@ namespace Drones
         public bool IsFull => Drones.Count >= MaxDroneCapacity;
 
         [NotMapped]
-        public int DronesInBaseCount => Drones.Count(d => d.IsInBase);
+        public int ParkedCount => ParkedDrones.Count;
 
         [NotMapped]
-        public int DronesInFlightCount => Drones.Count - DronesInBaseCount;
+        public bool IsParkingFull => ParkedDrones.Count >= MaxParkingCapacity;
+
+        [NotMapped]
+        public int DronesInBaseCount => Drones.Count(d => d.ParkedAtBaseId == Id);
+
+        [NotMapped]
+        public int DronesInFlightCount => Drones.Count(d => d.ParkedAtBaseId == null);
+
+        [NotMapped]
+        public int DronesAwayCount => DroneCount - DronesInBaseCount - DronesInFlightCount;
     }
 
     public class CivilianBase : DroneBase
@@ -55,6 +71,7 @@ namespace Drones
         string Name,
         float Latitude,
         float Longitude,
-        int MaxDroneCapacity
+        int MaxDroneCapacity,
+        int MaxParkingCapacity
     );
 }

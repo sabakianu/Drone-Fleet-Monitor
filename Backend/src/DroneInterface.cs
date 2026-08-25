@@ -83,13 +83,17 @@ namespace Drones
         [JsonIgnore]
         public DroneBase? HomeBase { get; set; }
 
-        // e parcată în bază: aceleași coordonate + altitudine ca baza.
+        public int? ParkedAtBaseId { get; set; }
+
+        [JsonIgnore]
+        public DroneBase? ParkedAtBase { get; set; }
+
         [NotMapped]
-        public bool IsInBase =>
-            HomeBase != null
-            && MathF.Abs(CurrentLocation.Latitude - HomeBase.CurrentLocation.Latitude) < 0.0001f
-            && MathF.Abs(CurrentLocation.Longitude - HomeBase.CurrentLocation.Longitude) < 0.0001f
-            && MathF.Abs(CurrentLocation.Altitude - HomeBase.CurrentLocation.Altitude) < 0.5f;
+        public bool IsInBase => ParkedAtBaseId != null;
+
+        // parcată la o bază care nu e a ei
+        [NotMapped]
+        public bool IsVisiting => ParkedAtBaseId != null && ParkedAtBaseId != DroneBaseId;
 
         // NotMapped -> nu se slaveaza in baza de date
         [NotMapped]

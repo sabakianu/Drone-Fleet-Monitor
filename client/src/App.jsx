@@ -9,6 +9,7 @@ import {
   fetchBase,
   setDroneStatus,
   setDroneName,
+  relocateDrone,
   destroyDrone,
   setBaseStatus,
   setBaseName,
@@ -31,12 +32,15 @@ import {
   removeBaseMesh,
 } from "./assets/Scene/markers.js";
 import { setupHover, setupClick } from "./assets/Scene/interactions.js";
+import RelocatePanel from "./assets/Components/RelocatePanel.jsx";
 
 export default function App() {
   const [selectedDrone, setSelectedDrone] = useState(null);
   const [selectedBase, setSelectedBase] = useState(null);
 
   const [renameTarget, setRenameTarget] = useState(null);
+
+  const [relocateTarget, setRelocateTarget] = useState(null);
   const mountRef = useRef(null);
   const objectsRef = useRef([]);
   const globeRef = useRef(null);
@@ -97,6 +101,36 @@ export default function App() {
     setRenameTarget(null);
   };
 
+  const refreshBases = async (...baseIds) => {
+    const unique = [...new Set(baseIds.filter((id) => id != null))];
+
+    for (const baseId of unique) {
+      const refreshed = await fetchBase(baseId);
+
+      const baseMesh = findBaseMesh(objectsRef.current, baseId);
+      if (baseMesh) baseMesh.userData.droneBase = refreshed;
+
+      setSelectedBase((current) =>
+        current && current.id === baseId ? refreshed : current,
+      );
+    }
+  };
+
+  const openRelocateDrone = async (drone) => {
+    setRelocateTarget({ drone, bases: await fetchBases() });
+  };
+
+  const handleRelocateConfirm = async (baseId) => {
+    const { drone } = relocateTarget;
+    const updated = await relocateDrone(drone.id, baseId);
+
+    applyDroneUpdate(updated);
+    setRelocateTarget(null);
+
+    // se schimba apartenenta: vechea baza, noua baza si cea in care e parcata
+    await refreshBases(drone.droneBaseId, baseId, updated.parkedAtBaseId);
+  };
+
   const handleDestroyDrone = async (drone) => {
     await destroyDrone(drone.id);
 
@@ -105,18 +139,7 @@ export default function App() {
       current && current.id === drone.id ? null : current,
     );
 
-    // contoarele bazei sunt calculate pe server -> reîncărcăm baza afectată
-    const baseId = drone.droneBaseId;
-    if (baseId == null) return;
-
-    const refreshed = await fetchBase(baseId);
-
-    const baseMesh = findBaseMesh(objectsRef.current, baseId);
-    if (baseMesh) baseMesh.userData.droneBase = refreshed;
-
-    setSelectedBase((current) =>
-      current && current.id === baseId ? refreshed : current,
-    );
+    await refreshBases(drone.droneBaseId, drone.parkedAtBaseId);
   };
 
   // sincronizează baza actualizată în panou și pe glob
@@ -286,6 +309,7 @@ export default function App() {
           onClose={() => setSelectedBase(null)}
           onDroneClick={setSelectedDrone}
           onRename={openRenameBase}
+          onRelocateDrone={openRelocateDrone}
           onToggleStatus={handleToggleBaseStatus}
           onDecommission={handleDecommissionBase}
         />
@@ -298,6 +322,15 @@ export default function App() {
           placeholder={renameTarget.placeholder}
           onCancel={() => setRenameTarget(null)}
           onConfirm={handleRenameConfirm}
+        />
+      )}
+
+      {relocateTarget && (
+        <RelocatePanel
+          drone={relocateTarget.drone}
+          bases={relocateTarget.bases}
+          onCancel={() => setRelocateTarget(null)}
+          onConfirm={handleRelocateConfirm}
         />
       )}
     </div>

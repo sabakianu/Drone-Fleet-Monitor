@@ -27,6 +27,12 @@ public class DroneContext : DbContext
             .HasForeignKey(d => d.DroneBaseId)
             .OnDelete(DeleteBehavior.SetNull);
 
+        modelBuilder.Entity<DroneBase>()
+            .HasMany(b => b.ParkedDrones)
+            .WithOne(d => d.ParkedAtBase)
+            .HasForeignKey(d => d.ParkedAtBaseId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         modelBuilder.Entity<BaseDrone>()
             .HasDiscriminator<DroneModel>("Model")
             .HasValue<Wingcopter198>(DroneModel.Wingcopter198)

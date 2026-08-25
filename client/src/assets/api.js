@@ -32,6 +32,11 @@ export function setDroneName(id, name) {
   );
 }
 
+// schimba doar baza de care apartine drona, nu si pozitia ei
+export function relocateDrone(id, baseId) {
+  return request("PUT", `/api/drones/${id}/base?baseId=${baseId}`);
+}
+
 export function destroyDrone(id) {
   return request("DELETE", `/api/drones/${id}`);
 }
