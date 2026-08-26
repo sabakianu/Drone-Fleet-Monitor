@@ -43,18 +43,6 @@ namespace Drones
         Combat = 3,
     }
 
-    public enum DroneModel
-    {
-        Wingcopter198 = 0,
-        MatternetM2 = 1,
-        Phantom4RTK = 2,
-        MavicEnterprise = 3,
-        BayraktarTB2 = 4,
-        Heron1 = 5,
-        MQ9Reaper = 6,
-        BayraktarAkinci = 7,
-    }
-
     public interface IDrone
     {
         public int Id { get; set; }
@@ -74,9 +62,12 @@ namespace Drones
         public float BatteryLevel { get; set; }
         public string Status { get; set; } = "offline";
 
-        public DroneModel Model { get; private set; }      // discriminator
-        public DroneKind Kind { get; protected set; }      // setat de tipul abstract
-        public DroneCategory Category { get; protected set; }
+        public DroneKind Kind { get; private set; }        // discriminator
+
+        public int DroneModelId { get; set; }
+
+        [JsonIgnore]
+        public DroneModel DroneModel { get; set; } = null!;
 
         public int? DroneBaseId { get; set; }              // baza de care aparține
 
@@ -95,37 +86,42 @@ namespace Drones
         [NotMapped]
         public bool IsVisiting => ParkedAtBaseId != null && ParkedAtBaseId != DroneBaseId;
 
-        // NotMapped -> nu se slaveaza in baza de date
+        // NotMapped -> nu se salveaza in baza de date, vin din DroneModel
         [NotMapped]
-        public abstract string ImagePath { get; }
+        public string Model => DroneModel.Name;
+        [NotMapped]
+        public DroneCategory Category => DroneModel.Category;
+        [NotMapped]
+        public string ImagePath => DroneModel.ImagePath;
 
         [NotMapped]
-        public abstract float MaxHorizontalSpeed { get; }
+        public float MaxHorizontalSpeed => DroneModel.MaxHorizontalSpeed;
         [NotMapped]
-        public abstract float MaxVerticalSpeed { get; }
+        public float MaxVerticalSpeed => DroneModel.MaxVerticalSpeed;
         [NotMapped]
-        public abstract float MaxAltitude { get; }
+        public float MaxAltitude => DroneModel.MaxAltitude;
         [NotMapped]
-        public abstract float BatteryCapacity { get; }
+        public float BatteryCapacity => DroneModel.BatteryCapacity;
     }
 
     public abstract class CivilianDrone : BaseDrone
     {
-        protected CivilianDrone()
-        {
-            Category = DroneCategory.Civilian;
-        }
-
         public string RegistrationNumber { get; set; } = "";
     }
 
     public abstract class MilitaryDrone : BaseDrone
     {
-        protected MilitaryDrone()
-        {
-            Category = DroneCategory.Military;
-        }
-
         public string EncryptionKey { get; set; } = "";
     }
+
+    public record DroneCatalogEntry(
+        string Model,
+        string Kind,
+        string Category,
+        string ImagePath,
+        float MaxHorizontalSpeed,
+        float MaxVerticalSpeed,
+        float MaxAltitude,
+        float BatteryCapacity
+    );
 }

@@ -259,7 +259,7 @@ export default function BasePanel({
         <ActionRow>
           <ActionButton
             variant="dark"
-            onClick={() => onAddDrone(droneBase)}
+            onClick={() => run(onAddDrone, droneBase)}
             disabled={busy || droneBase.isFull || droneBase.isParkingFull}
           >
             Add Drone

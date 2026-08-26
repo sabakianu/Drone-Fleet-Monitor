@@ -17,6 +17,11 @@ export function fetchBases() {
   return request("GET", "/api/bases");
 }
 
+// specificatiile modelelor, calculate de server din clasele concrete
+export function fetchDroneCatalog() {
+  return request("GET", "/api/drones/catalog");
+}
+
 export function fetchBase(id) {
   return request("GET", `/api/bases/${id}`);
 }

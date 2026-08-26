@@ -51,25 +51,57 @@ app.MapGet("/api/drones/military", (DroneContext context) =>
     return Results.Ok(militaryDrones);
 });
 
+static BaseDrone CreateDrone(DroneModel model)
+{
+    BaseDrone drone = model.Kind switch
+    {
+        DroneKind.Delivery => new DeliveryDrone(),
+        DroneKind.Survey => new SurveyDrone(),
+        DroneKind.Recon => new ReconDrone(),
+        DroneKind.Combat => new CombatDrone(),
+        _ => throw new ArgumentException("Unknown Drone Kind!"),
+    };
+
+    drone.DroneModel = model;
+    return drone;
+}
+
 app.MapPost("/api/drones/add", (string type, DroneContext context) =>
 {
-    BaseDrone newDrone = type.ToLower() switch
+    var model = context.DroneModels
+        .FirstOrDefault(m => m.Name.ToLower() == type.ToLower());
+
+    if (model == null)
     {
-        "wingcopter198" => new Wingcopter198(),
-        "matternetm2" => new MatternetM2(),
-        "phantom4rtk" => new Phantom4RTK(),
-        "mavicenterprise" => new MavicEnterprise(),
-        "bayraktartb2" => new BayraktarTB2(),
-        "heron1" => new Heron1(),
-        "mq9reaper" => new MQ9Reaper(),
-        "bayraktarakinci" => new BayraktarAkinci(),
-        _ => throw new ArgumentException("Unknown Drone!"),
-    };
+        return Results.NotFound($"Modelul {type} nu există în catalog.");
+    }
+
+    var newDrone = CreateDrone(model);
 
     context.Drones.Add(newDrone);
     context.SaveChanges();
 
-    return newDrone;
+    return Results.Ok(newDrone);
+});
+
+app.MapGet("/api/drones/catalog", (DroneContext context) =>
+{
+    var catalog = context.DroneModels
+        .OrderBy(m => m.Category)
+        .ThenBy(m => m.Kind)
+        .ThenBy(m => m.Name)
+        .Select(m => new DroneCatalogEntry(
+            m.Name,
+            m.Kind.ToString(),
+            m.Category.ToString(),
+            m.ImagePath,
+            m.MaxHorizontalSpeed,
+            m.MaxVerticalSpeed,
+            m.MaxAltitude,
+            m.BatteryCapacity))
+        .ToList();
+
+    return Results.Ok(catalog);
 });
 
 app.MapGet("/api/drones/{id}", (int id, DroneContext context) =>
@@ -288,24 +320,21 @@ app.MapPost("/api/bases/{id}/drones", (int id, string type, string? name, DroneC
             $"Parcarea bazei {droneBase.Name} e plină ({droneBase.ParkedCount}/{droneBase.MaxParkingCapacity}).");
     }
 
-    BaseDrone newDrone = type.ToLower() switch
-    {
-        "wingcopter198" => new Wingcopter198(),
-        "matternetm2" => new MatternetM2(),
-        "phantom4rtk" => new Phantom4RTK(),
-        "mavicenterprise" => new MavicEnterprise(),
-        "bayraktartb2" => new BayraktarTB2(),
-        "heron1" => new Heron1(),
-        "mq9reaper" => new MQ9Reaper(),
-        "bayraktarakinci" => new BayraktarAkinci(),
-        _ => throw new ArgumentException("Unknown Drone!"),
-    };
+    var model = context.DroneModels
+        .FirstOrDefault(m => m.Name.ToLower() == type.ToLower());
 
-    if (newDrone.Category != droneBase.Category)
+    if (model == null)
+    {
+        return Results.NotFound($"Modelul {type} nu există în catalog.");
+    }
+
+    if (model.Category != droneBase.Category)
     {
         return Results.BadRequest(
-            $"O dronă {newDrone.Category} nu poate fi asignată unei baze {droneBase.Category}.");
+            $"O dronă {model.Category} nu poate fi asignată unei baze {droneBase.Category}.");
     }
+
+    var newDrone = CreateDrone(model);
 
     newDrone.CurrentLocation.SetLocation(
         droneBase.CurrentLocation.Latitude,

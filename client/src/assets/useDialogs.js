@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { fetchBases } from "./api.js";
+import { fetchBases, fetchDroneCatalog } from "./api.js";
 
 // ce dialog e deschis, ce date are si ce actiune din useFleet declanseaza.
 // dialogul se inchide doar dupa ce actiunea reuseste, altfel isi arata eroarea
@@ -42,7 +42,8 @@ export default function useDialogs(fleet) {
     setRelocateTarget(null);
   };
 
-  const openAddDrone = (droneBase) => setAddDroneTarget({ droneBase });
+  const openAddDrone = async (droneBase) =>
+    setAddDroneTarget({ droneBase, catalog: await fetchDroneCatalog() });
 
   const confirmAddDrone = async (model, name) => {
     await fleet.addDrone(addDroneTarget.droneBase, model, name);

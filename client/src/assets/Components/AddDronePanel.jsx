@@ -1,11 +1,15 @@
 import { useState } from "react";
 import useAction from "../useAction.js";
-import { kindsFor, modelsFor } from "../droneCatalog.js";
 import Dialog from "./UI/Dialog.jsx";
 import Dropdown from "./UI/Dropdown.jsx";
 import OptionButton from "./UI/OptionButton.jsx";
 
-export default function AddDronePanel({ droneBase, onCancel, onConfirm }) {
+export default function AddDronePanel({
+  droneBase,
+  catalog,
+  onCancel,
+  onConfirm,
+}) {
   const [kind, setKind] = useState(null);
   const [model, setModel] = useState(null);
   const [name, setName] = useState("");
@@ -13,12 +17,15 @@ export default function AddDronePanel({ droneBase, onCancel, onConfirm }) {
 
   const baseLabel = droneBase.name || `Base #${droneBase.id}`;
 
-  const kindOptions = kindsFor(droneBase.category).map((entry) => ({
-    value: entry,
-    label: entry,
-  }));
+  const available = catalog.filter(
+    (entry) => entry.category === droneBase.category,
+  );
 
-  const models = kind ? modelsFor(droneBase.category, kind) : [];
+  const kindOptions = [...new Set(available.map((entry) => entry.kind))].map(
+    (entry) => ({ value: entry, label: entry }),
+  );
+
+  const models = kind ? available.filter((entry) => entry.kind === kind) : [];
 
   const handleSubmit = (event) => {
     event.preventDefault();

@@ -73,6 +73,7 @@ export default function App() {
       {dialogs.addDroneTarget && (
         <AddDronePanel
           droneBase={dialogs.addDroneTarget.droneBase}
+          catalog={dialogs.addDroneTarget.catalog}
           onCancel={dialogs.closeAddDrone}
           onConfirm={dialogs.confirmAddDrone}
         />
