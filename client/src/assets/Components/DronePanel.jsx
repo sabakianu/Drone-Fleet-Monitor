@@ -11,6 +11,7 @@ export default function DronePanel({
   onClose,
   onRename,
   onToggleStatus,
+  onMove,
   onDestroy,
 }) {
   const batteryMah = Math.round(
@@ -143,7 +144,9 @@ export default function DronePanel({
           </ActionButton>
         </ActionRow>
         <ActionRow>
-          <ActionButton variant="dark">Move</ActionButton>
+          <ActionButton variant="dark" onClick={() => onMove(drone)}>
+            Move
+          </ActionButton>
           <ActionButton
             variant="danger"
             onClick={() => onDestroy(drone)}

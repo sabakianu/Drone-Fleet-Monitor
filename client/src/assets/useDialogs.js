@@ -8,6 +8,7 @@ export default function useDialogs(fleet) {
   const [relocateTarget, setRelocateTarget] = useState(null);
   const [addDroneTarget, setAddDroneTarget] = useState(null);
   const [confirmTarget, setConfirmTarget] = useState(null);
+  const [moveTarget, setMoveTarget] = useState(null);
 
   const openRenameDrone = (drone) =>
     setRenameTarget({
@@ -107,6 +108,10 @@ export default function useDialogs(fleet) {
     openAddDrone,
     confirmAddDrone,
     closeAddDrone: () => setAddDroneTarget(null),
+
+    moveTarget,
+    startMove: (drone) => setMoveTarget(drone),
+    cancelMove: () => setMoveTarget(null),
 
     confirmTarget,
     askDestroyDrone,

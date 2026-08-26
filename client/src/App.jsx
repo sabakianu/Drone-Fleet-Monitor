@@ -5,6 +5,8 @@ import RenamePanel from "./assets/Components/RenamePanel.jsx";
 import RelocatePanel from "./assets/Components/RelocatePanel.jsx";
 import AddDronePanel from "./assets/Components/AddDronePanel.jsx";
 import ConfirmPanel from "./assets/Components/ConfirmPanel.jsx";
+import CursorIcon from "./assets/Components/UI/CursorIcon.jsx";
+import RelocateCursor from "./assets/Icons/CursorRelocate.png";
 import useGlobeScene from "./assets/Scene/useGlobeScene.js";
 import useFleet from "./assets/useFleet.js";
 import useDialogs from "./assets/useDialogs.js";
@@ -34,6 +36,7 @@ export default function App() {
           onClose={() => fleet.setSelectedDrone(null)}
           onRename={dialogs.openRenameDrone}
           onToggleStatus={fleet.toggleDroneStatus}
+          onMove={dialogs.startMove}
           onDestroy={dialogs.askDestroyDrone}
         />
       )}
@@ -76,6 +79,15 @@ export default function App() {
           catalog={dialogs.addDroneTarget.catalog}
           onCancel={dialogs.closeAddDrone}
           onConfirm={dialogs.confirmAddDrone}
+        />
+      )}
+
+      {dialogs.moveTarget && (
+        <CursorIcon
+          cursor={RelocateCursor}
+          hotspotX={8}
+          hotspotY={16}
+          onCancel={dialogs.cancelMove}
         />
       )}
 
