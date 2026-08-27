@@ -5,6 +5,7 @@ import RenamePanel from "./assets/Components/RenamePanel.jsx";
 import RelocatePanel from "./assets/Components/RelocatePanel.jsx";
 import AddDronePanel from "./assets/Components/AddDronePanel.jsx";
 import ConfirmPanel from "./assets/Components/ConfirmPanel.jsx";
+import MovePanel from "./assets/Components/MovePanel.jsx";
 import CursorIcon from "./assets/Components/UI/CursorIcon.jsx";
 import RelocateCursor from "./assets/Icons/CursorRelocate.png";
 import useGlobeScene from "./assets/Scene/useGlobeScene.js";
@@ -24,11 +25,16 @@ export default function App() {
     globeRef,
     onSelectDrone: fleet.setSelectedDrone,
     onSelectBase: fleet.setSelectedBase,
+    onGlobeClick: dialogs.pickMoveDestination,
   });
 
   return (
     <div className="relative  w-screen h-screen overflow-hidden">
-      <div ref={mountRef} className="absolute top-0 left-0 w-full h-full z-0" />
+      <div
+        ref={mountRef}
+        data-globe
+        className="absolute top-0 left-0 w-full h-full z-0"
+      />
 
       {fleet.selectedDrone && (
         <DronePanel
@@ -68,6 +74,7 @@ export default function App() {
         <RelocatePanel
           drone={dialogs.relocateTarget.drone}
           bases={dialogs.relocateTarget.bases}
+          distances={dialogs.relocateTarget.distances}
           onCancel={dialogs.closeRelocate}
           onConfirm={dialogs.confirmRelocate}
         />
@@ -79,6 +86,15 @@ export default function App() {
           catalog={dialogs.addDroneTarget.catalog}
           onCancel={dialogs.closeAddDrone}
           onConfirm={dialogs.confirmAddDrone}
+        />
+      )}
+
+      {dialogs.movePlan && (
+        <MovePanel
+          drone={dialogs.movePlan.drone}
+          destination={dialogs.movePlan.destination}
+          onCancel={dialogs.closeMove}
+          onConfirm={dialogs.confirmMove}
         />
       )}
 

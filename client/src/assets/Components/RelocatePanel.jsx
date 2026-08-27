@@ -1,31 +1,15 @@
 import { useState } from "react";
 import useAction from "../useAction.js";
+import { formatDistance } from "../format.js";
 import Dialog from "./UI/Dialog.jsx";
 
-const EARTH_RADIUS_KM = 6371;
-
-function distanceKm(from, to) {
-  const toRad = (deg) => (deg * Math.PI) / 180;
-
-  const dLat = toRad(to.latitude - from.latitude);
-  const dLon = toRad(to.longitude - from.longitude);
-  const lat1 = toRad(from.latitude);
-  const lat2 = toRad(to.latitude);
-
-  const h =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
-
-  return 2 * EARTH_RADIUS_KM * Math.asin(Math.sqrt(h));
-}
-
-function formatDistance(km) {
-  return km < 10
-    ? `${km.toFixed(1)} km`
-    : `${Math.round(km).toLocaleString("en-US")} km`;
-}
-
-export default function RelocatePanel({ drone, bases, onCancel, onConfirm }) {
+export default function RelocatePanel({
+  drone,
+  bases,
+  distances,
+  onCancel,
+  onConfirm,
+}) {
   const [selectedId, setSelectedId] = useState(null);
   const { busy, error, run } = useAction();
 
@@ -42,7 +26,7 @@ export default function RelocatePanel({ drone, bases, onCancel, onConfirm }) {
         wrongCategory,
         blocked: base.isFull || wrongCategory,
         reason: wrongCategory ? base.category.toUpperCase() : "FULL",
-        distance: distanceKm(drone.currentLocation, base.currentLocation),
+        distance: distances[base.id],
       };
     })
     .sort((a, b) => a.blocked - b.blocked || a.distance - b.distance);

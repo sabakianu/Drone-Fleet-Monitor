@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { fetchBases, fetchDroneCatalog } from "./api.js";
+import { fetchBases, fetchDroneCatalog, fetchDroneDistances } from "./api.js";
 
 // ce dialog e deschis, ce date are si ce actiune din useFleet declanseaza.
 // dialogul se inchide doar dupa ce actiunea reuseste, altfel isi arata eroarea
@@ -9,6 +9,19 @@ export default function useDialogs(fleet) {
   const [addDroneTarget, setAddDroneTarget] = useState(null);
   const [confirmTarget, setConfirmTarget] = useState(null);
   const [moveTarget, setMoveTarget] = useState(null);
+  const [movePlan, setMovePlan] = useState(null);
+
+  const pickMoveDestination = (geo) => {
+    if (moveTarget === null) return;
+
+    setMovePlan({ drone: moveTarget, destination: geo });
+    setMoveTarget(null);
+  };
+
+  const confirmMove = async (plan) => {
+    console.log("move drone", { droneId: movePlan.drone.id, ...plan });
+    setMovePlan(null);
+  };
 
   const openRenameDrone = (drone) =>
     setRenameTarget({
@@ -35,8 +48,14 @@ export default function useDialogs(fleet) {
     setRenameTarget(null);
   };
 
-  const openRelocateDrone = async (drone) =>
-    setRelocateTarget({ drone, bases: await fetchBases() });
+  const openRelocateDrone = async (drone) => {
+    const [bases, distances] = await Promise.all([
+      fetchBases(),
+      fetchDroneDistances(drone.id),
+    ]);
+
+    setRelocateTarget({ drone, bases, distances });
+  };
 
   const confirmRelocate = async (baseId) => {
     await fleet.relocateDrone(relocateTarget.drone, baseId);
@@ -112,6 +131,11 @@ export default function useDialogs(fleet) {
     moveTarget,
     startMove: (drone) => setMoveTarget(drone),
     cancelMove: () => setMoveTarget(null),
+    pickMoveDestination,
+
+    movePlan,
+    confirmMove,
+    closeMove: () => setMovePlan(null),
 
     confirmTarget,
     askDestroyDrone,

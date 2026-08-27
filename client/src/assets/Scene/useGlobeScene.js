@@ -17,13 +17,14 @@ export default function useGlobeScene({
   globeRef,
   onSelectDrone,
   onSelectBase,
+  onGlobeClick,
 }) {
   const mountRef = useRef(null);
 
   // callbackurile prin ref: efectul ruleaza o singura data, dar apeleaza
   // mereu ultima versiune primita
   const selectRef = useRef(null);
-  selectRef.current = { onSelectDrone, onSelectBase };
+  selectRef.current = { onSelectDrone, onSelectBase, onGlobeClick };
 
   useEffect(() => {
     if (mountRef.current) {
@@ -63,6 +64,10 @@ export default function useGlobeScene({
         } else if (clickedObject.userData.type === "base") {
           selectRef.current.onSelectBase(clickedObject.userData.droneBase);
         }
+      },
+      {
+        getGlobe: () => globeRef.current,
+        onGeoClicked: (geo) => selectRef.current.onGlobeClick?.(geo),
       },
     );
 
