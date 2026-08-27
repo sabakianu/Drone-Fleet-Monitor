@@ -9,6 +9,7 @@ import MovePanel from "./assets/Components/MovePanel.jsx";
 import CursorIcon from "./assets/Components/UI/CursorIcon.jsx";
 import RelocateCursor from "./assets/Icons/CursorRelocate.png";
 import useGlobeScene from "./assets/Scene/useGlobeScene.js";
+import useMoveTargets from "./assets/Scene/useMoveTargets.js";
 import useFleet from "./assets/useFleet.js";
 import useDialogs from "./assets/useDialogs.js";
 
@@ -28,6 +29,8 @@ export default function App() {
     onGlobeClick: dialogs.pickMoveDestination,
   });
 
+  useMoveTargets({ globeRef, orders: dialogs.moveOrders });
+
   return (
     <div className="relative  w-screen h-screen overflow-hidden">
       <div
@@ -43,6 +46,13 @@ export default function App() {
           onRename={dialogs.openRenameDrone}
           onToggleStatus={fleet.toggleDroneStatus}
           onMove={dialogs.startMove}
+          onCancelOrder={
+            dialogs.moveOrders.some(
+              (order) => order.droneId === fleet.selectedDrone.id,
+            )
+              ? () => dialogs.cancelOrder(fleet.selectedDrone.id)
+              : null
+          }
           onDestroy={dialogs.askDestroyDrone}
         />
       )}
@@ -93,6 +103,7 @@ export default function App() {
         <MovePanel
           drone={dialogs.movePlan.drone}
           destination={dialogs.movePlan.destination}
+          onDestinationChange={dialogs.updateMoveDestination}
           onCancel={dialogs.closeMove}
           onConfirm={dialogs.confirmMove}
         />

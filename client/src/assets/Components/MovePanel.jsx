@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import useAction from "../useAction.js";
 import { fetchDroneTrip } from "../api.js";
 import { formatDistance, formatDuration } from "../format.js";
@@ -9,7 +9,13 @@ const number = (value) => (value.trim() === "" ? NaN : Number(value));
 
 const inRange = (value, min, max) => value >= min && value <= max;
 
-export default function MovePanel({ drone, destination, onCancel, onConfirm }) {
+export default function MovePanel({
+  drone,
+  destination,
+  onDestinationChange,
+  onCancel,
+  onConfirm,
+}) {
   const [latitude, setLatitude] = useState(destination.latitude.toFixed(4));
   const [longitude, setLongitude] = useState(destination.longitude.toFixed(4));
   const [altitude, setAltitude] = useState(
@@ -40,8 +46,15 @@ export default function MovePanel({ drone, destination, onCancel, onConfirm }) {
 
   const hasErrors = Object.values(invalid).some(Boolean);
 
-  // distanta si timpul le calculeaza serverul (Distance.cs), deci le recerem
-  // cand se schimba planul - cu o pauza, ca sa nu tragem la fiecare tasta
+  const notifyRef = useRef(null);
+  notifyRef.current = onDestinationChange;
+
+  useEffect(() => {
+    if (invalid.latitude || invalid.longitude) return;
+
+    notifyRef.current({ latitude: lat, longitude: lon });
+  }, [lat, lon, invalid.latitude, invalid.longitude]);
+
   const [trip, setTrip] = useState(null);
 
   useEffect(() => {

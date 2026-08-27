@@ -11,15 +11,49 @@ export default function useDialogs(fleet) {
   const [moveTarget, setMoveTarget] = useState(null);
   const [movePlan, setMovePlan] = useState(null);
 
+  const [moveOrders, setMoveOrders] = useState([]);
+
+  const putOrder = (order) =>
+    setMoveOrders((current) => {
+      const previous = current.find((entry) => entry.droneId === order.droneId);
+
+      if (
+        previous &&
+        previous.origin === order.origin &&
+        previous.destination.latitude === order.destination.latitude &&
+        previous.destination.longitude === order.destination.longitude
+      ) {
+        return current;
+      }
+
+      return [
+        ...current.filter((entry) => entry.droneId !== order.droneId),
+        order,
+      ];
+    });
+
+  const dropOrder = (droneId) =>
+    setMoveOrders((current) =>
+      current.filter((entry) => entry.droneId !== droneId),
+    );
+
   const pickMoveDestination = (geo) => {
     if (moveTarget === null) return;
 
     setMovePlan({ drone: moveTarget, destination: geo });
+    putOrder({ droneId: moveTarget.id, destination: geo, origin: null });
     setMoveTarget(null);
   };
 
   const confirmMove = async (plan) => {
     console.log("move drone", { droneId: movePlan.drone.id, ...plan });
+
+    // destinatia din plan, nu cea din click: poate fi editata din inputuri
+    putOrder({
+      droneId: movePlan.drone.id,
+      destination: { latitude: plan.latitude, longitude: plan.longitude },
+      origin: movePlan.drone.currentLocation,
+    });
     setMovePlan(null);
   };
 
@@ -128,14 +162,27 @@ export default function useDialogs(fleet) {
     confirmAddDrone,
     closeAddDrone: () => setAddDroneTarget(null),
 
+    moveOrders,
+    cancelOrder: dropOrder,
+
     moveTarget,
-    startMove: (drone) => setMoveTarget(drone),
+    // replanificarea aceleiasi drone inlocuieste ordinul ei, nu pe ale altora
+    startMove: (drone) => {
+      dropOrder(drone.id);
+      setMoveTarget(drone);
+    },
     cancelMove: () => setMoveTarget(null),
     pickMoveDestination,
 
     movePlan,
     confirmMove,
-    closeMove: () => setMovePlan(null),
+    // tinta urmareste inputurile din panou, nu doar punctul din click
+    updateMoveDestination: (geo) =>
+      putOrder({ droneId: movePlan.drone.id, destination: geo, origin: null }),
+    closeMove: () => {
+      dropOrder(movePlan.drone.id);
+      setMovePlan(null);
+    },
 
     confirmTarget,
     askDestroyDrone,

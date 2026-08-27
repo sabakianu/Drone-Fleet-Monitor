@@ -8,6 +8,7 @@ export default function Panel({
   image,
   imageAlt,
   caption,
+  headerAction,
   onClose,
   children,
 }) {
@@ -24,7 +25,10 @@ export default function Panel({
             <h2 className="text-sm text-slate-500 font-medium">{subtitle}</h2>
           )}
         </div>
-        <IconButton icon={CloseButton} label="Close" onClick={onClose} />
+        <div className="flex items-center gap-2">
+          {headerAction}
+          <IconButton icon={CloseButton} label="Close" onClick={onClose} />
+        </div>
       </div>
 
       <div className="h-36 w-full overflow-hidden rounded-lg">

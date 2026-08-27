@@ -12,6 +12,7 @@ export default function DronePanel({
   onRename,
   onToggleStatus,
   onMove,
+  onCancelOrder,
   onDestroy,
 }) {
   const batteryMah = Math.round(
@@ -30,6 +31,18 @@ export default function DronePanel({
       image={droneImg}
       imageAlt={drone.model}
       caption={`${drone.category} ${drone.kind} Drone`}
+      headerAction={
+        onCancelOrder && (
+          <ActionButton
+            variant="danger"
+            size="small"
+            grow={false}
+            onClick={onCancelOrder}
+          >
+            Cancel Order
+          </ActionButton>
+        )
+      }
       onClose={onClose}
     >
       {/* baterie */}

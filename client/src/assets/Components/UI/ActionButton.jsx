@@ -6,8 +6,15 @@ const VARIANTS = {
   danger: "bg-red-600 hover:bg-red-700",
 };
 
+const SIZES = {
+  default: "py-2 text-sm rounded-lg",
+  small: "px-2 py-0.5 text-[11px] rounded-md",
+};
+
 export default function ActionButton({
   variant = "neutral",
+  size = "default",
+  grow = true,
   className = "",
   ...props
 }) {
@@ -15,7 +22,7 @@ export default function ActionButton({
     <button
       type="button"
       {...props}
-      className={`flex-1 ${VARIANTS[variant]} disabled:bg-slate-400 disabled:cursor-not-allowed text-white font-semibold py-2 rounded-lg transition-colors text-sm ${className}`}
+      className={`${grow ? "flex-1" : ""} ${VARIANTS[variant]} ${SIZES[size]} disabled:bg-slate-400 disabled:cursor-not-allowed text-white font-semibold transition-colors ${className}`}
     />
   );
 }
