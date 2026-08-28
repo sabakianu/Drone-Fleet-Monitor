@@ -136,7 +136,7 @@ function arcPoints(globe, from, to) {
   );
 }
 
-export function spawnMoveTarget(globe, destination, origin = null) {
+export function spawnGlobeMarker(globe, destination, origin = null) {
   const group = new THREE.Group();
 
   const sprite = new THREE.Sprite(
@@ -175,7 +175,7 @@ export function spawnMoveTarget(globe, destination, origin = null) {
   return group;
 }
 
-export function removeMoveTarget(globe, group) {
+export function removeGlobeMarker(globe, group) {
   globe.remove(group);
 
   group.traverse((child) => {

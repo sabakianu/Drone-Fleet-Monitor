@@ -2,8 +2,6 @@ import { useEffect, useRef } from "react";
 
 export default function CursorIcon({
   cursor,
-  hotspotX = 0,
-  hotspotY = 0,
   scope = "[data-globe]",
   onCancel,
 }) {
@@ -11,9 +9,11 @@ export default function CursorIcon({
   cancelRef.current = onCancel;
 
   useEffect(() => {
+    const { image, hotspotX, hotspotY } = cursor;
+
     const style = document.createElement("style");
     style.textContent = `${scope}, ${scope} * {
-      cursor: url("${cursor}") ${hotspotX} ${hotspotY}, crosshair !important;
+      cursor: url("${image}") ${hotspotX} ${hotspotY}, crosshair !important;
     }`;
     document.head.appendChild(style);
 
@@ -32,7 +32,7 @@ export default function CursorIcon({
       window.removeEventListener("keydown", handleKey);
       window.removeEventListener("contextmenu", handleContextMenu);
     };
-  }, [cursor, hotspotX, hotspotY, scope]);
+  }, [cursor, scope]);
 
   return null;
 }

@@ -11,50 +11,74 @@ export default function useDialogs(fleet) {
   const [moveTarget, setMoveTarget] = useState(null);
   const [movePlan, setMovePlan] = useState(null);
 
-  const [moveOrders, setMoveOrders] = useState([]);
+  const [addingBase, setAddingBase] = useState(false);
+  const [addBasePlan, setAddBasePlan] = useState(null);
 
-  const putOrder = (order) =>
-    setMoveOrders((current) => {
-      const previous = current.find((entry) => entry.droneId === order.droneId);
+  // markerii desenati pe glob, identificati prin cheie: ordinele de mutare si
+  // locul unde se pune o baza noua
+  const [globeMarkers, setGlobeMarkers] = useState([]);
 
+  const droneKey = (droneId) => `drone-${droneId}`;
+  const NEW_BASE_KEY = "new-base";
+
+  const putMarker = (marker) =>
+    setGlobeMarkers((current) => {
+      const previous = current.find((entry) => entry.key === marker.key);
+
+      // acelasi marker -> pastram array-ul, ca sa nu respawnam degeaba
       if (
         previous &&
-        previous.origin === order.origin &&
-        previous.destination.latitude === order.destination.latitude &&
-        previous.destination.longitude === order.destination.longitude
+        previous.origin === marker.origin &&
+        previous.destination.latitude === marker.destination.latitude &&
+        previous.destination.longitude === marker.destination.longitude
       ) {
         return current;
       }
 
-      return [
-        ...current.filter((entry) => entry.droneId !== order.droneId),
-        order,
-      ];
+      return [...current.filter((entry) => entry.key !== marker.key), marker];
     });
 
-  const dropOrder = (droneId) =>
-    setMoveOrders((current) =>
-      current.filter((entry) => entry.droneId !== droneId),
-    );
+  const dropMarker = (key) =>
+    setGlobeMarkers((current) => current.filter((entry) => entry.key !== key));
 
-  const pickMoveDestination = (geo) => {
-    if (moveTarget === null) return;
+  // clickul pe glob inseamna altceva in functie de modul activ
+  const handleGlobeClick = (geo) => {
+    if (moveTarget !== null) {
+      setMovePlan({ drone: moveTarget, destination: geo });
+      putMarker({
+        key: droneKey(moveTarget.id),
+        destination: geo,
+        origin: null,
+      });
+      setMoveTarget(null);
+      return;
+    }
 
-    setMovePlan({ drone: moveTarget, destination: geo });
-    putOrder({ droneId: moveTarget.id, destination: geo, origin: null });
-    setMoveTarget(null);
+    if (addingBase) {
+      setAddBasePlan({ location: geo });
+      putMarker({ key: NEW_BASE_KEY, destination: geo, origin: null });
+      setAddingBase(false);
+    }
   };
 
   const confirmMove = async (plan) => {
     console.log("move drone", { droneId: movePlan.drone.id, ...plan });
 
     // destinatia din plan, nu cea din click: poate fi editata din inputuri
-    putOrder({
-      droneId: movePlan.drone.id,
+    putMarker({
+      key: droneKey(movePlan.drone.id),
       destination: { latitude: plan.latitude, longitude: plan.longitude },
       origin: movePlan.drone.currentLocation,
     });
     setMovePlan(null);
+  };
+
+  // mock: baza nu se creeaza inca pe server
+  const confirmAddBase = async (request) => {
+    console.log("add base", request);
+
+    dropMarker(NEW_BASE_KEY);
+    setAddBasePlan(null);
   };
 
   const openRenameDrone = (drone) =>
@@ -162,26 +186,45 @@ export default function useDialogs(fleet) {
     confirmAddDrone,
     closeAddDrone: () => setAddDroneTarget(null),
 
-    moveOrders,
-    cancelOrder: dropOrder,
+    globeMarkers,
+    handleGlobeClick,
+    hasOrderFor: (droneId) =>
+      globeMarkers.some((entry) => entry.key === droneKey(droneId)),
+    cancelOrder: (droneId) => dropMarker(droneKey(droneId)),
 
     moveTarget,
     // replanificarea aceleiasi drone inlocuieste ordinul ei, nu pe ale altora
     startMove: (drone) => {
-      dropOrder(drone.id);
+      dropMarker(droneKey(drone.id));
       setMoveTarget(drone);
     },
     cancelMove: () => setMoveTarget(null),
-    pickMoveDestination,
 
     movePlan,
     confirmMove,
     // tinta urmareste inputurile din panou, nu doar punctul din click
     updateMoveDestination: (geo) =>
-      putOrder({ droneId: movePlan.drone.id, destination: geo, origin: null }),
+      putMarker({
+        key: droneKey(movePlan.drone.id),
+        destination: geo,
+        origin: null,
+      }),
     closeMove: () => {
-      dropOrder(movePlan.drone.id);
+      dropMarker(droneKey(movePlan.drone.id));
       setMovePlan(null);
+    },
+
+    addingBase,
+    startAddBase: () => setAddingBase(true),
+    cancelAddBase: () => setAddingBase(false),
+
+    addBasePlan,
+    confirmAddBase,
+    updateAddBaseLocation: (geo) =>
+      putMarker({ key: NEW_BASE_KEY, destination: geo, origin: null }),
+    closeAddBase: () => {
+      dropMarker(NEW_BASE_KEY);
+      setAddBasePlan(null);
     },
 
     confirmTarget,

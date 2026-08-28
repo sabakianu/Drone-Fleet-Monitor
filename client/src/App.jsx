@@ -6,11 +6,13 @@ import RelocatePanel from "./assets/Components/RelocatePanel.jsx";
 import AddDronePanel from "./assets/Components/AddDronePanel.jsx";
 import ConfirmPanel from "./assets/Components/ConfirmPanel.jsx";
 import MovePanel from "./assets/Components/MovePanel.jsx";
+import AddBasePanel from "./assets/Components/AddBasePanel.jsx";
 import SimClock from "./assets/Components/SimClock.jsx";
+import ActionButton from "./assets/Components/UI/ActionButton.jsx";
 import CursorIcon from "./assets/Components/UI/CursorIcon.jsx";
-import RelocateCursor from "./assets/Icons/CursorRelocate.png";
+import { RelocateCursor, LocationCursor } from "./assets/cursors.js";
 import useGlobeScene from "./assets/Scene/useGlobeScene.js";
-import useMoveTargets from "./assets/Scene/useMoveTargets.js";
+import useGlobeMarkers from "./assets/Scene/useGlobeMarkers.js";
 import useFleet from "./assets/useFleet.js";
 import useDialogs from "./assets/useDialogs.js";
 
@@ -27,10 +29,10 @@ export default function App() {
     globeRef,
     onSelectDrone: fleet.setSelectedDrone,
     onSelectBase: fleet.setSelectedBase,
-    onGlobeClick: dialogs.pickMoveDestination,
+    onGlobeClick: dialogs.handleGlobeClick,
   });
 
-  useMoveTargets({ globeRef, orders: dialogs.moveOrders });
+  useGlobeMarkers({ globeRef, markers: dialogs.globeMarkers });
 
   return (
     <div className="relative  w-screen h-screen overflow-hidden">
@@ -42,6 +44,17 @@ export default function App() {
 
       <SimClock shifted={fleet.selectedDrone !== null} />
 
+      <div className="absolute bottom-4.5 right-2.25 z-40 flex">
+        <ActionButton
+          variant="dark"
+          grow={false}
+          className="px-4"
+          onClick={dialogs.startAddBase}
+        >
+          Add Base
+        </ActionButton>
+      </div>
+
       {fleet.selectedDrone && (
         <DronePanel
           drone={fleet.selectedDrone}
@@ -50,9 +63,7 @@ export default function App() {
           onToggleStatus={fleet.toggleDroneStatus}
           onMove={dialogs.startMove}
           onCancelOrder={
-            dialogs.moveOrders.some(
-              (order) => order.droneId === fleet.selectedDrone.id,
-            )
+            dialogs.hasOrderFor(fleet.selectedDrone.id)
               ? () => dialogs.cancelOrder(fleet.selectedDrone.id)
               : null
           }
@@ -112,13 +123,21 @@ export default function App() {
         />
       )}
 
-      {dialogs.moveTarget && (
-        <CursorIcon
-          cursor={RelocateCursor}
-          hotspotX={8}
-          hotspotY={16}
-          onCancel={dialogs.cancelMove}
+      {dialogs.addBasePlan && (
+        <AddBasePanel
+          location={dialogs.addBasePlan.location}
+          onLocationChange={dialogs.updateAddBaseLocation}
+          onCancel={dialogs.closeAddBase}
+          onConfirm={dialogs.confirmAddBase}
         />
+      )}
+
+      {dialogs.moveTarget && (
+        <CursorIcon cursor={RelocateCursor} onCancel={dialogs.cancelMove} />
+      )}
+
+      {dialogs.addingBase && (
+        <CursorIcon cursor={LocationCursor} onCancel={dialogs.cancelAddBase} />
       )}
 
       {dialogs.confirmTarget && (

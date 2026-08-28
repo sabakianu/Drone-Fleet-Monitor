@@ -1,6 +1,7 @@
 import { useState } from "react";
 import useAction from "../useAction.js";
 import Dialog from "./UI/Dialog.jsx";
+import TextField from "./UI/TextField.jsx";
 
 export default function RenamePanel({
   title = "Rename",
@@ -30,21 +31,14 @@ export default function RenamePanel({
       error={error}
       confirmDisabled={trimmed.length === 0}
     >
-      <label
-        htmlFor="rename-input"
-        className="text-sm font-semibold text-slate-700 mb-1"
-      >
-        New name:
-      </label>
-      <input
+      <TextField
         id="rename-input"
+        label="New name:"
         autoFocus
         value={name}
-        onChange={(event) => setName(event.target.value)}
+        onChange={setName}
         placeholder={placeholder}
-        maxLength={40}
         disabled={busy}
-        className="w-full bg-zinc-100 border-2 border-zinc-300 rounded-lg px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-accent disabled:text-slate-400 transition-colors"
       />
     </Dialog>
   );
