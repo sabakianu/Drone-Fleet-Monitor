@@ -2,6 +2,7 @@ import { useState } from "react";
 import * as api from "./api.js";
 import {
   spawnDrone,
+  spawnBase,
   findDroneSprite,
   findBaseMesh,
   removeDroneSprite,
@@ -135,6 +136,16 @@ export default function useFleet({ objectsRef, globeRef }) {
     await refreshBases(droneBase.id);
   };
 
+  const addBase = async (newBase) => {
+    const created = await api.createBase(newBase);
+
+    if (globeRef.current) {
+      spawnBase(globeRef.current, created, objectsRef.current);
+    }
+
+    return created;
+  };
+
   const decommissionBase = async (droneBase) => {
     // dronele parcate sunt sterse pe server odata cu baza
     await api.decommissionBase(droneBase.id);
@@ -160,6 +171,7 @@ export default function useFleet({ objectsRef, globeRef }) {
 
     toggleBaseStatus,
     renameBase,
+    addBase,
     addDrone,
     decommissionBase,
   };

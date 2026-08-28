@@ -1,5 +1,13 @@
-async function request(method, url) {
-  const res = await fetch(url, { method });
+async function request(method, url, body) {
+  const res = await fetch(url, {
+    method,
+    ...(body === undefined
+      ? {}
+      : {
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        }),
+  });
 
   if (!res.ok) {
     const detail = await res.text().catch(() => "");
@@ -88,6 +96,11 @@ export function setBaseName(id, name) {
     "PUT",
     `/api/bases/${id}/name?name=${encodeURIComponent(name)}`,
   );
+}
+
+// capacitatile lipsesc din payload: serverul pune valorile implicite
+export function createBase(newBase) {
+  return request("POST", "/api/bases/add", newBase);
 }
 
 export function decommissionBase(id) {

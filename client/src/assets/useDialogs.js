@@ -73,9 +73,8 @@ export default function useDialogs(fleet) {
     setMovePlan(null);
   };
 
-  // mock: baza nu se creeaza inca pe server
-  const confirmAddBase = async (request) => {
-    console.log("add base", request);
+  const confirmAddBase = async (newBase) => {
+    await fleet.addBase(newBase);
 
     dropMarker(NEW_BASE_KEY);
     setAddBasePlan(null);

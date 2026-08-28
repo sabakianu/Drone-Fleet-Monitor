@@ -24,18 +24,26 @@ export default function AddBasePanel({
   const [category, setCategory] = useState(null);
   const [latitude, setLatitude] = useState(location.latitude.toFixed(4));
   const [longitude, setLongitude] = useState(location.longitude.toFixed(4));
+  const [droneCapacity, setDroneCapacity] = useState("5");
+  const [parkingCapacity, setParkingCapacity] = useState("7");
 
   const { busy, error, run } = useAction();
 
   const lat = number(latitude);
   const lon = number(longitude);
+  const drones = number(droneCapacity);
+  const parking = number(parkingCapacity);
   const trimmed = name.trim();
+
+  const whole = (value) => Number.isInteger(value) && value >= 1;
 
   const invalid = {
     name: trimmed.length === 0,
     category: category === null,
     latitude: !inRange(lat, -90, 90),
     longitude: !inRange(lon, -180, 180),
+    droneCapacity: !whole(drones),
+    parkingCapacity: !whole(parking),
   };
 
   const hasErrors = Object.values(invalid).some(Boolean);
@@ -58,6 +66,8 @@ export default function AddBasePanel({
       category,
       latitude: lat,
       longitude: lon,
+      maxDroneCapacity: drones,
+      maxParkingCapacity: parking,
     });
   };
 
@@ -117,6 +127,33 @@ export default function AddBasePanel({
           max={180}
           disabled={busy}
           invalid={invalid.longitude}
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 mt-3">
+        <NumberField
+          id="add-base-drone-capacity"
+          label="Assigned"
+          hint="min 1"
+          unit="drones"
+          value={droneCapacity}
+          onChange={setDroneCapacity}
+          min={1}
+          step={1}
+          disabled={busy}
+          invalid={invalid.droneCapacity}
+        />
+        <NumberField
+          id="add-base-parking-capacity"
+          label="Parked"
+          hint="min 1"
+          unit="slots"
+          value={parkingCapacity}
+          onChange={setParkingCapacity}
+          min={1}
+          step={1}
+          disabled={busy}
+          invalid={invalid.parkingCapacity}
         />
       </div>
     </Dialog>

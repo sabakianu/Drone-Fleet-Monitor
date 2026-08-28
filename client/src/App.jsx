@@ -44,7 +44,11 @@ export default function App() {
 
       <SimClock shifted={fleet.selectedDrone !== null} />
 
-      <div className="absolute bottom-4.5 right-2.25 z-40 flex">
+      <div
+        className={`absolute bottom-4.5 right-2.25 z-40 flex transition-transform duration-300 ease-out ${
+          fleet.selectedBase !== null ? "-translate-x-82.25" : ""
+        }`}
+      >
         <ActionButton
           variant="dark"
           grow={false}

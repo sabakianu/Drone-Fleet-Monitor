@@ -7,57 +7,57 @@ namespace Drones.Api
     {
         public static void MapNavigationEndpoints(this WebApplication app)
         {
-        var drones = app.MapGroup("/api/drones");
+            var drones = app.MapGroup("/api/drones");
 
-        drones.MapGet("/{id}/trip", (
-            int id,
-            float latitude,
-            float longitude,
-            float altitude,
-            float horizontalSpeed,
-            float verticalSpeed,
-            DroneContext context) =>
-        {
-            var drone = context.Drones.FirstOrDefault(d => d.Id == id);
-
-            if (drone == null)
+            drones.MapGet("/{id}/trip", (
+                int id,
+                float latitude,
+                float longitude,
+                float altitude,
+                float horizontalSpeed,
+                float verticalSpeed,
+                DroneContext context) =>
             {
-                return Results.NotFound($"Drona cu ID-ul {id} nu a fost găsită.");
-            }
+                var drone = context.Drones.FirstOrDefault(d => d.Id == id);
 
-            if (horizontalSpeed <= 0 || verticalSpeed <= 0)
-            {
-                return Results.BadRequest("Vitezele trebuie să fie mai mari decât zero.");
-            }
+                if (drone == null)
+                {
+                    return Results.NotFound($"Drona cu ID-ul {id} nu a fost găsită.");
+                }
 
-            var destination = new Location();
-            destination.SetLocation(latitude, longitude, altitude);
+                if (horizontalSpeed <= 0 || verticalSpeed <= 0)
+                {
+                    return Results.BadRequest("Vitezele trebuie să fie mai mari decât zero.");
+                }
 
-            return Results.Ok(new
-            {
-                distanceKm = Distance.BetweenKm(drone.CurrentLocation, destination),
-                climbMeters = Distance.ClimbMeters(drone.CurrentLocation, destination),
-                travelSeconds = Distance.TravelSeconds(
-                    drone.CurrentLocation, destination, horizontalSpeed, verticalSpeed),
+                var destination = new Location();
+                destination.SetLocation(latitude, longitude, altitude);
+
+                return Results.Ok(new
+                {
+                    distanceKm = Distance.BetweenKm(drone.CurrentLocation, destination),
+                    climbMeters = Distance.ClimbMeters(drone.CurrentLocation, destination),
+                    travelSeconds = Distance.TravelSeconds(
+                        drone.CurrentLocation, destination, horizontalSpeed, verticalSpeed),
+                });
             });
-        });
-        drones.MapGet("/{id}/distances", (int id, DroneContext context) =>
-        {
-            var drone = context.Drones.FirstOrDefault(d => d.Id == id);
-
-            if (drone == null)
+            drones.MapGet("/{id}/distances", (int id, DroneContext context) =>
             {
-                return Results.NotFound($"Drona cu ID-ul {id} nu a fost găsită.");
-            }
+                var drone = context.Drones.FirstOrDefault(d => d.Id == id);
 
-            var distances = context.Bases
-                .ToList()
-                .ToDictionary(
-                    b => b.Id,
-                    b => Distance.BetweenKm(drone.CurrentLocation, b.CurrentLocation));
+                if (drone == null)
+                {
+                    return Results.NotFound($"Drona cu ID-ul {id} nu a fost găsită.");
+                }
 
-            return Results.Ok(distances);
-        });
+                var distances = context.Bases
+                    .ToList()
+                    .ToDictionary(
+                        b => b.Id,
+                        b => Distance.BetweenKm(drone.CurrentLocation, b.CurrentLocation));
+
+                return Results.Ok(distances);
+            });
         }
     }
 }

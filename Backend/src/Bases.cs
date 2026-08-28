@@ -71,7 +71,7 @@ namespace Drones
         string Name,
         float Latitude,
         float Longitude,
-        int MaxDroneCapacity,
-        int MaxParkingCapacity
+        int? MaxDroneCapacity = null,
+        int? MaxParkingCapacity = null
     );
 }

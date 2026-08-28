@@ -7,22 +7,22 @@ namespace Drones.Api
     {
         public static void MapSimulationEndpoints(this WebApplication app)
         {
-        var simulation = app.MapGroup("/api/simulation");
+            var simulation = app.MapGroup("/api/simulation");
 
-        simulation.MapGet("/clock", (SimulationClock clock) =>
-            Results.Ok(clock.Snapshot()));
-        simulation.MapPut("/speed", (int value, SimulationClock clock) =>
-        {
-            if (!SimulationTime.Speeds.Contains(value))
+            simulation.MapGet("/clock", (SimulationClock clock) =>
+                Results.Ok(clock.Snapshot()));
+            simulation.MapPut("/speed", (int value, SimulationClock clock) =>
             {
-                return Results.BadRequest(
-                    $"Viteza {value} nu e permisă. Valori: {string.Join(", ", SimulationTime.Speeds)}.");
-            }
+                if (!SimulationTime.Speeds.Contains(value))
+                {
+                    return Results.BadRequest(
+                        $"Viteza {value} nu e permisă. Valori: {string.Join(", ", SimulationTime.Speeds)}.");
+                }
 
-            clock.SetSpeed(value);
+                clock.SetSpeed(value);
 
-            return Results.Ok(clock.Snapshot());
-        });
+                return Results.Ok(clock.Snapshot());
+            });
         }
     }
 }
