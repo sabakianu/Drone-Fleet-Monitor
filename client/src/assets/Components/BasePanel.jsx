@@ -7,6 +7,7 @@ import useAction from "../useAction.js";
 import ActionButton, { ActionRow } from "./UI/ActionButton.jsx";
 import IconButton from "./UI/IconButton.jsx";
 import Panel, { PanelFooter } from "./UI/Panel.jsx";
+import SectionHeading from "./UI/SectionHeading.jsx";
 
 const DRONE_VIEWS = [
   {
@@ -43,6 +44,7 @@ export default function BasePanel({
   onRename,
   onAddDrone,
   onRelocateDrone,
+  onCenterLocation,
   onToggleStatus,
   onDecommission,
 }) {
@@ -73,14 +75,13 @@ export default function BasePanel({
       {/* locatie */}
       <div className="flex flex-col gap-3 mb-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <img
-              src={LocationIcon}
-              alt="Location"
-              className="w-5 h-5 object-contain opacity-70"
-            />
-            <h3 className="text-sm font-semibold text-slate-700">Location:</h3>
-          </div>
+          <SectionHeading
+            icon={LocationIcon}
+            iconLabel="Center the globe here"
+            onIconClick={() => onCenterLocation(droneBase.currentLocation)}
+          >
+            Location:
+          </SectionHeading>
           <div className="flex items-center gap-4 text-sm text-slate-600 pl-7">
             <p>
               Lat:{" "}

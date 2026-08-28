@@ -5,6 +5,7 @@ import { resolveImage } from "../images.js";
 import useAction from "../useAction.js";
 import ActionButton, { ActionRow } from "./UI/ActionButton.jsx";
 import Panel, { PanelFooter } from "./UI/Panel.jsx";
+import SectionHeading from "./UI/SectionHeading.jsx";
 
 export default function DronePanel({
   drone,
@@ -13,6 +14,7 @@ export default function DronePanel({
   onToggleStatus,
   onMove,
   onCancelOrder,
+  onCenterLocation,
   onDestroy,
 }) {
   const batteryMah = Math.round(
@@ -63,14 +65,13 @@ export default function DronePanel({
       {/* locatie */}
       <div className="flex flex-col gap-3 mb-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <img
-              src={LocationIcon}
-              alt="Location"
-              className="w-5 h-5 object-contain opacity-70"
-            />
-            <h3 className="text-sm font-semibold text-slate-700">Location:</h3>
-          </div>
+          <SectionHeading
+            icon={LocationIcon}
+            iconLabel="Center the globe here"
+            onIconClick={() => onCenterLocation(drone.currentLocation)}
+          >
+            Location:
+          </SectionHeading>
           <div className="flex items-center gap-4 text-sm text-slate-600 pl-7">
             <p>
               Lat:{" "}
@@ -90,14 +91,7 @@ export default function DronePanel({
 
         {/* altitudine */}
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <img
-              src={AltitudeIcon}
-              alt="Altitude"
-              className="w-5 h-5 object-contain opacity-70"
-            />
-            <h3 className="text-sm font-semibold text-slate-700">Altitude:</h3>
-          </div>
+          <SectionHeading icon={AltitudeIcon}>Altitude:</SectionHeading>
           <div className="text-sm text-slate-600 pl-7">
             <span className="font-bold text-slate-800">
               {drone.currentLocation.altitude}m
@@ -110,9 +104,7 @@ export default function DronePanel({
 
         {/* viteza */}
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <h3 className="text-sm font-semibold text-slate-700">Speed:</h3>
-          </div>
+          <SectionHeading>Speed:</SectionHeading>
           <div className="flex flex-col gap-1 text-sm text-slate-600 pl-7">
             <p>
               Horiz:{" "}

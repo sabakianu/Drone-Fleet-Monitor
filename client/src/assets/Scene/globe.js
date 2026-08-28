@@ -40,6 +40,7 @@ export function setupGlobeRotation(globe, renderer) {
 
   renderer.domElement.addEventListener("pointerdown", (event) => {
     if (event.button === 0) {
+      stopCentering();
       isDragging = true;
       previousX = event.clientX;
       previousY = event.clientY;
@@ -62,6 +63,53 @@ export function setupGlobeRotation(globe, renderer) {
   renderer.domElement.addEventListener("pointerup", () => {
     isDragging = false;
   });
+}
+
+const CENTER_DURATION_MS = 600;
+
+let centerFrameId = null;
+
+function stopCentering() {
+  if (centerFrameId === null) return;
+
+  cancelAnimationFrame(centerFrameId);
+  centerFrameId = null;
+}
+
+function shortestDelta(from, to) {
+  let delta = (to - from) % (Math.PI * 2);
+
+  if (delta > Math.PI) delta -= Math.PI * 2;
+  if (delta < -Math.PI) delta += Math.PI * 2;
+
+  return delta;
+}
+
+export function centerGlobeOn(globe, { latitude, longitude }) {
+  stopCentering();
+
+  const fromX = globe.rotation.x;
+  const fromY = globe.rotation.y;
+
+  const deltaX = shortestDelta(fromX, THREE.MathUtils.degToRad(latitude));
+  const deltaY = shortestDelta(fromY, THREE.MathUtils.degToRad(-longitude));
+
+  const start = performance.now();
+
+  const step = () => {
+    const progress = Math.min(
+      (performance.now() - start) / CENTER_DURATION_MS,
+      1,
+    );
+    const eased = 1 - (1 - progress) ** 3;
+
+    globe.rotation.x = fromX + deltaX * eased;
+    globe.rotation.y = fromY + deltaY * eased;
+
+    centerFrameId = progress < 1 ? requestAnimationFrame(step) : null;
+  };
+
+  step();
 }
 
 export async function setupGlobeScene(scene) {

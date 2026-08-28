@@ -13,6 +13,7 @@ import CursorIcon from "./assets/Components/UI/CursorIcon.jsx";
 import { RelocateCursor, LocationCursor } from "./assets/cursors.js";
 import useGlobeScene from "./assets/Scene/useGlobeScene.js";
 import useGlobeMarkers from "./assets/Scene/useGlobeMarkers.js";
+import { centerGlobeOn } from "./assets/Scene/globe.js";
 import useFleet from "./assets/useFleet.js";
 import useDialogs from "./assets/useDialogs.js";
 
@@ -33,6 +34,11 @@ export default function App() {
   });
 
   useGlobeMarkers({ globeRef, markers: dialogs.globeMarkers });
+
+  // globul poate lipsi pana se incarca harta
+  const centerOn = (location) => {
+    if (globeRef.current) centerGlobeOn(globeRef.current, location);
+  };
 
   return (
     <div className="relative  w-screen h-screen overflow-hidden">
@@ -66,6 +72,7 @@ export default function App() {
           onRename={dialogs.openRenameDrone}
           onToggleStatus={fleet.toggleDroneStatus}
           onMove={dialogs.startMove}
+          onCenterLocation={centerOn}
           onCancelOrder={
             dialogs.hasOrderFor(fleet.selectedDrone.id)
               ? () => dialogs.cancelOrder(fleet.selectedDrone.id)
@@ -83,6 +90,7 @@ export default function App() {
           onRename={dialogs.openRenameBase}
           onAddDrone={dialogs.openAddDrone}
           onRelocateDrone={dialogs.openRelocateDrone}
+          onCenterLocation={centerOn}
           onToggleStatus={fleet.toggleBaseStatus}
           onDecommission={dialogs.askDecommissionBase}
         />
