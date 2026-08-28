@@ -7,6 +7,8 @@
   --color-confirm: #6d9b6a;
   --color-confirm-deep: #57855a;
 
+  --font-digital: "Share Tech Mono", ui-monospace, SFMono-Regular, monospace;
+
   --color-cancel: #9b6a6d;
   --color-cancel-deep: #85575a;
 }

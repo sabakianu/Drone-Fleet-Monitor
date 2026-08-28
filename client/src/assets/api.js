@@ -9,6 +9,14 @@ async function request(method, url) {
   return res.json();
 }
 
+export function fetchSimulationClock() {
+  return request("GET", "/api/simulation/clock");
+}
+
+export function setSimulationSpeed(value) {
+  return request("PUT", `/api/simulation/speed?value=${value}`);
+}
+
 export function fetchDrones() {
   return request("GET", "/api/drones");
 }
@@ -17,7 +25,7 @@ export function fetchBases() {
   return request("GET", "/api/bases");
 }
 
-// specificatiile modelelor, calculate de server din clasele concrete
+// specificatiile modelelor
 export function fetchDroneCatalog() {
   return request("GET", "/api/drones/catalog");
 }

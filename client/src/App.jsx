@@ -6,6 +6,7 @@ import RelocatePanel from "./assets/Components/RelocatePanel.jsx";
 import AddDronePanel from "./assets/Components/AddDronePanel.jsx";
 import ConfirmPanel from "./assets/Components/ConfirmPanel.jsx";
 import MovePanel from "./assets/Components/MovePanel.jsx";
+import SimClock from "./assets/Components/SimClock.jsx";
 import CursorIcon from "./assets/Components/UI/CursorIcon.jsx";
 import RelocateCursor from "./assets/Icons/CursorRelocate.png";
 import useGlobeScene from "./assets/Scene/useGlobeScene.js";
@@ -38,6 +39,8 @@ export default function App() {
         data-globe
         className="absolute top-0 left-0 w-full h-full z-0"
       />
+
+      <SimClock shifted={fleet.selectedDrone !== null} />
 
       {fleet.selectedDrone && (
         <DronePanel
