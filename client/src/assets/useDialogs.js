@@ -62,13 +62,17 @@ export default function useDialogs(fleet) {
   };
 
   const confirmMove = async (plan) => {
-    console.log("move drone", { droneId: movePlan.drone.id, ...plan });
+    const { drone } = movePlan;
+
+    const origin = { ...drone.currentLocation };
+
+    await fleet.moveDrone(drone, plan);
 
     // destinatia din plan, nu cea din click: poate fi editata din inputuri
     putMarker({
-      key: droneKey(movePlan.drone.id),
+      key: droneKey(drone.id),
       destination: { latitude: plan.latitude, longitude: plan.longitude },
-      origin: movePlan.drone.currentLocation,
+      origin,
     });
     setMovePlan(null);
   };
@@ -189,7 +193,11 @@ export default function useDialogs(fleet) {
     handleGlobeClick,
     hasOrderFor: (droneId) =>
       globeMarkers.some((entry) => entry.key === droneKey(droneId)),
-    cancelOrder: (droneId) => dropMarker(droneKey(droneId)),
+    // anularea opreste drona unde a ajuns si sterge traseul
+    cancelOrder: async (drone) => {
+      await fleet.cancelDroneMove(drone);
+      dropMarker(droneKey(drone.id));
+    },
 
     moveTarget,
     // replanificarea aceleiasi drone inlocuieste ordinul ei, nu pe ale altora

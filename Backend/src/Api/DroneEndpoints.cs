@@ -106,6 +106,72 @@ namespace Drones.Api
 
                 return Results.Ok(drone);
             });
+            drones.MapPut("/{id}/move", (
+                int id,
+                float latitude,
+                float longitude,
+                float altitude,
+                float horizontalSpeed,
+                float verticalSpeed,
+                DroneContext context,
+                MoveOrders orders) =>
+            {
+                var drone = context.Drones.FirstOrDefault(d => d.Id == id);
+
+                if (drone == null)
+                {
+                    return Results.NotFound($"Drona cu ID-ul {id} nu a fost găsită.");
+                }
+
+                if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180)
+                {
+                    return Results.BadRequest("Coordonatele sunt în afara intervalului.");
+                }
+
+                if (altitude < 0 || altitude > drone.MaxAltitude)
+                {
+                    return Results.BadRequest(
+                        $"Altitudinea trebuie să fie între 0 și {drone.MaxAltitude} m.");
+                }
+
+                if (horizontalSpeed <= 0 || horizontalSpeed > drone.MaxHorizontalSpeed)
+                {
+                    return Results.BadRequest(
+                        $"Viteza orizontală trebuie să fie între 0 și {drone.MaxHorizontalSpeed} km/h.");
+                }
+
+                if (verticalSpeed <= 0 || verticalSpeed > drone.MaxVerticalSpeed)
+                {
+                    return Results.BadRequest(
+                        $"Viteza verticală trebuie să fie între 0 și {drone.MaxVerticalSpeed} m/s.");
+                }
+
+                drone.ParkedAtBaseId = null;
+                drone.CurrentSpeed.SetSpeed(horizontalSpeed, verticalSpeed);
+                context.SaveChanges();
+
+                orders.Set(id, new MovePlan(
+                    latitude, longitude, altitude, horizontalSpeed, verticalSpeed));
+
+                return Results.Ok(drone);
+            });
+
+            drones.MapDelete("/{id}/move", (int id, DroneContext context, MoveOrders orders) =>
+            {
+                var drone = context.Drones.FirstOrDefault(d => d.Id == id);
+
+                if (drone == null)
+                {
+                    return Results.NotFound($"Drona cu ID-ul {id} nu a fost găsită.");
+                }
+
+                orders.Remove(id);
+                drone.CurrentSpeed.SetSpeed(0f, 0f);
+                context.SaveChanges();
+
+                return Results.Ok(drone);
+            });
+
             drones.MapPut("/{id}/base", (int id, int baseId, DroneContext context) =>
             {
                 var drone = context.Drones.FirstOrDefault(d => d.Id == id);

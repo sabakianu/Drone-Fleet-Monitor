@@ -3,6 +3,8 @@ import droneIcon from "../Icons/Drone.png";
 import baseIcon from "../Icons/DroneBase.png";
 import moveTargetIcon from "../Icons/MoveTarget.png";
 
+const DRONE_ALTITUDE = 0.05;
+
 export function spawnDrone(globe, drone, objectsArray) {
   const textureLoader = new THREE.TextureLoader();
   const texture = textureLoader.load(droneIcon);
@@ -19,7 +21,7 @@ export function spawnDrone(globe, drone, objectsArray) {
   const coords = globe.getCoords(
     drone.currentLocation.latitude,
     drone.currentLocation.longitude,
-    0.05,
+    DRONE_ALTITUDE,
   );
   sprite.position.set(coords.x, coords.y, coords.z);
 
@@ -31,6 +33,22 @@ export function spawnDrone(globe, drone, objectsArray) {
   };
   globe.add(sprite);
   objectsArray.push(sprite);
+
+  return sprite;
+}
+
+export function placeDroneSprite(globe, drone, objectsArray) {
+  const sprite = findDroneSprite(objectsArray, drone.id);
+
+  if (!sprite) return spawnDrone(globe, drone, objectsArray);
+
+  const coords = globe.getCoords(
+    drone.currentLocation.latitude,
+    drone.currentLocation.longitude,
+    DRONE_ALTITUDE,
+  );
+  sprite.position.set(coords.x, coords.y, coords.z);
+  sprite.userData.drone = drone;
 
   return sprite;
 }

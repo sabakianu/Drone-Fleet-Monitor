@@ -74,6 +74,22 @@ export function fetchDroneDistances(id) {
   return request("GET", `/api/drones/${id}/distances`);
 }
 
+export function moveDrone(id, plan) {
+  const query = new URLSearchParams({
+    latitude: plan.latitude,
+    longitude: plan.longitude,
+    altitude: plan.altitude,
+    horizontalSpeed: plan.horizontalSpeed,
+    verticalSpeed: plan.verticalSpeed,
+  });
+
+  return request("PUT", `/api/drones/${id}/move?${query}`);
+}
+
+export function cancelDroneMove(id) {
+  return request("DELETE", `/api/drones/${id}/move`);
+}
+
 export function destroyDrone(id) {
   return request("DELETE", `/api/drones/${id}`);
 }

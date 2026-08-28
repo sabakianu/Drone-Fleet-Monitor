@@ -13,6 +13,8 @@ builder.Services.ConfigureHttpJsonOptions(o =>
 
 
 builder.Services.AddSingleton<SimulationClock>();
+builder.Services.AddSingleton<MoveOrders>();
+builder.Services.AddHostedService<MovementService>();
 
 builder.Services.AddDbContext<DroneContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));

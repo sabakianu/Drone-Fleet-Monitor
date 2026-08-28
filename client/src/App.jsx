@@ -75,7 +75,7 @@ export default function App() {
           onCenterLocation={centerOn}
           onCancelOrder={
             dialogs.hasOrderFor(fleet.selectedDrone.id)
-              ? () => dialogs.cancelOrder(fleet.selectedDrone.id)
+              ? () => dialogs.cancelOrder(fleet.selectedDrone)
               : null
           }
           onDestroy={dialogs.askDestroyDrone}

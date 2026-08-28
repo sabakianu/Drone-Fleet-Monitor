@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import * as api from "./api.js";
 import {
   spawnDrone,
   spawnBase,
+  placeDroneSprite,
   findDroneSprite,
   findBaseMesh,
   removeDroneSprite,
@@ -10,6 +11,8 @@ import {
 } from "./Scene/markers.js";
 
 // aliniaza panourile si globul cu rezultatul
+const POLL_MS = 400;
+
 export default function useFleet({ objectsRef, globeRef }) {
   const [selectedDrone, setSelectedDrone] = useState(null);
   const [selectedBase, setSelectedBase] = useState(null);
@@ -82,16 +85,18 @@ export default function useFleet({ objectsRef, globeRef }) {
         return;
       }
 
-      if (sprite) {
+      if (globeRef.current) {
+        placeDroneSprite(globeRef.current, drone, objectsRef.current);
+      } else if (sprite) {
         sprite.userData.drone = drone;
-      } else if (globeRef.current) {
-        spawnDrone(globeRef.current, drone, objectsRef.current);
       }
     });
 
     setSelectedDrone((current) =>
       current ? (byId.get(current.id) ?? null) : current,
     );
+
+    return drones;
   };
 
   const toggleDroneStatus = async (drone) => {
@@ -109,6 +114,44 @@ export default function useFleet({ objectsRef, globeRef }) {
 
     // se schimba apartenenta: vechea baza, noua baza si cea in care e parcata
     await refreshBases(drone.droneBaseId, baseId, updated.parkedAtBaseId);
+  };
+
+  const [flying, setFlying] = useState(false);
+
+  useEffect(() => {
+    if (!flying) return;
+
+    let stopped = false;
+
+    const poll = async () => {
+      try {
+        const drones = await syncDronesFromServer();
+
+        if (!stopped && !drones.some((d) => d.currentSpeed.horizontal > 0)) {
+          setFlying(false);
+        }
+      } catch (err) {
+        console.error("failed to sync fleet:", err);
+      }
+    };
+
+    const timer = setInterval(poll, POLL_MS);
+
+    return () => {
+      stopped = true;
+      clearInterval(timer);
+    };
+  }, [flying]);
+
+  const moveDrone = async (drone, plan) => {
+    applyDroneUpdate(await api.moveDrone(drone.id, plan));
+    setFlying(true);
+
+    await refreshBases(drone.droneBaseId, drone.parkedAtBaseId);
+  };
+
+  const cancelDroneMove = async (drone) => {
+    applyDroneUpdate(await api.cancelDroneMove(drone.id));
   };
 
   const destroyDrone = async (drone) => {
@@ -166,6 +209,8 @@ export default function useFleet({ objectsRef, globeRef }) {
 
     toggleDroneStatus,
     renameDrone,
+    moveDrone,
+    cancelDroneMove,
     relocateDrone,
     destroyDrone,
 
