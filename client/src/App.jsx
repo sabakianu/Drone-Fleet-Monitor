@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import DronePanel from "./assets/Components/DronePanel.jsx";
 import BasePanel from "./assets/Components/BasePanel.jsx";
 import RenamePanel from "./assets/Components/RenamePanel.jsx";
@@ -7,6 +7,7 @@ import AddDronePanel from "./assets/Components/AddDronePanel.jsx";
 import ConfirmPanel from "./assets/Components/ConfirmPanel.jsx";
 import MovePanel from "./assets/Components/MovePanel.jsx";
 import AddBasePanel from "./assets/Components/AddBasePanel.jsx";
+import AltitudePanel from "./assets/Components/AltitudePanel.jsx";
 import SimClock from "./assets/Components/SimClock.jsx";
 import ActionButton from "./assets/Components/UI/ActionButton.jsx";
 import CursorIcon from "./assets/Components/UI/CursorIcon.jsx";
@@ -33,7 +34,15 @@ export default function App() {
     onGlobeClick: dialogs.handleGlobeClick,
   });
 
-  useGlobeMarkers({ globeRef, markers: dialogs.globeMarkers });
+  useGlobeMarkers({
+    globeRef,
+    markers: dialogs.globeMarkers,
+    drones: fleet.drones,
+  });
+
+  useEffect(() => {
+    dialogs.dropArrivedOrders(fleet.drones);
+  }, [fleet.drones]);
 
   // globul poate lipsi pana se incarca harta
   const centerOn = (location) => {
@@ -73,6 +82,7 @@ export default function App() {
           onToggleStatus={fleet.toggleDroneStatus}
           onMove={dialogs.startMove}
           onCenterLocation={centerOn}
+          onChangeAltitude={dialogs.openChangeAltitude}
           onCancelOrder={
             dialogs.hasOrderFor(fleet.selectedDrone.id)
               ? () => dialogs.cancelOrder(fleet.selectedDrone)
@@ -132,6 +142,14 @@ export default function App() {
           onDestinationChange={dialogs.updateMoveDestination}
           onCancel={dialogs.closeMove}
           onConfirm={dialogs.confirmMove}
+        />
+      )}
+
+      {dialogs.altitudeTarget && (
+        <AltitudePanel
+          drone={dialogs.altitudeTarget.drone}
+          onCancel={dialogs.closeAltitude}
+          onConfirm={dialogs.confirmAltitude}
         />
       )}
 

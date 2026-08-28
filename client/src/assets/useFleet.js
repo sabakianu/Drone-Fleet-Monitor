@@ -14,6 +14,7 @@ import {
 const POLL_MS = 400;
 
 export default function useFleet({ objectsRef, globeRef }) {
+  const [drones, setDrones] = useState([]);
   const [selectedDrone, setSelectedDrone] = useState(null);
   const [selectedBase, setSelectedBase] = useState(null);
 
@@ -95,6 +96,8 @@ export default function useFleet({ objectsRef, globeRef }) {
     setSelectedDrone((current) =>
       current ? (byId.get(current.id) ?? null) : current,
     );
+
+    setDrones(drones);
 
     return drones;
   };
@@ -202,6 +205,7 @@ export default function useFleet({ objectsRef, globeRef }) {
   };
 
   return {
+    drones,
     selectedDrone,
     setSelectedDrone,
     selectedBase,

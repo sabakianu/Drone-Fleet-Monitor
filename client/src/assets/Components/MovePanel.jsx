@@ -4,6 +4,7 @@ import { fetchDroneTrip } from "../api.js";
 import { formatDistance, formatDuration } from "../format.js";
 import Dialog from "./UI/Dialog.jsx";
 import NumberField from "./UI/NumberField.jsx";
+import SpeedFields from "./UI/SpeedFields.jsx";
 
 const number = (value) => (value.trim() === "" ? NaN : Number(value));
 
@@ -153,30 +154,17 @@ export default function MovePanel({
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-3 mt-3">
-        <NumberField
-          id="move-horizontal-speed"
-          label="Horizontal"
-          hint={`max ${drone.maxHorizontalSpeed}`}
-          unit="km/h"
-          value={horizontalSpeed}
-          onChange={setHorizontalSpeed}
-          min={1}
-          max={drone.maxHorizontalSpeed}
+      <div className="mt-3">
+        <SpeedFields
+          idPrefix="move"
+          drone={drone}
+          horizontal={horizontalSpeed}
+          vertical={verticalSpeed}
+          onHorizontalChange={setHorizontalSpeed}
+          onVerticalChange={setVerticalSpeed}
+          invalidHorizontal={invalid.horizontalSpeed}
+          invalidVertical={invalid.verticalSpeed}
           disabled={busy}
-          invalid={invalid.horizontalSpeed}
-        />
-        <NumberField
-          id="move-vertical-speed"
-          label="Vertical"
-          hint={`max ${drone.maxVerticalSpeed}`}
-          unit="m/s"
-          value={verticalSpeed}
-          onChange={setVerticalSpeed}
-          min={1}
-          max={drone.maxVerticalSpeed}
-          disabled={busy}
-          invalid={invalid.verticalSpeed}
         />
       </div>
 

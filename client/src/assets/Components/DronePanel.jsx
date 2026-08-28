@@ -15,6 +15,7 @@ export default function DronePanel({
   onMove,
   onCancelOrder,
   onCenterLocation,
+  onChangeAltitude,
   onDestroy,
 }) {
   const batteryMah = Math.round(
@@ -91,7 +92,13 @@ export default function DronePanel({
 
         {/* altitudine */}
         <div>
-          <SectionHeading icon={AltitudeIcon}>Altitude:</SectionHeading>
+          <SectionHeading
+            icon={AltitudeIcon}
+            iconLabel="Change altitude"
+            onIconClick={() => onChangeAltitude(drone)}
+          >
+            Altitude:
+          </SectionHeading>
           <div className="text-sm text-slate-600 pl-7">
             <span className="font-bold text-slate-800">
               {drone.currentLocation.altitude}m

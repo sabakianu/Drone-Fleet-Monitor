@@ -11,6 +11,7 @@ export default function useDialogs(fleet) {
   const [moveTarget, setMoveTarget] = useState(null);
   const [movePlan, setMovePlan] = useState(null);
 
+  const [altitudeTarget, setAltitudeTarget] = useState(null);
   const [addingBase, setAddingBase] = useState(false);
   const [addBasePlan, setAddBasePlan] = useState(null);
 
@@ -41,12 +42,33 @@ export default function useDialogs(fleet) {
   const dropMarker = (key) =>
     setGlobeMarkers((current) => current.filter((entry) => entry.key !== key));
 
+  // un marker cu origin inseamna zbor pornit; cand drona s-a oprit, a ajuns
+  const dropArrivedOrders = (drones) => {
+    if (drones.length === 0) return;
+
+    setGlobeMarkers((current) => {
+      const next = current.filter((entry) => {
+        if (entry.origin === null || !entry.droneId) return true;
+
+        const drone = drones.find((d) => d.id === entry.droneId);
+        if (!drone) return false;
+
+        return (
+          drone.currentSpeed.horizontal > 0 || drone.currentSpeed.vertical > 0
+        );
+      });
+
+      return next.length === current.length ? current : next;
+    });
+  };
+
   // clickul pe glob inseamna altceva in functie de modul activ
   const handleGlobeClick = (geo) => {
     if (moveTarget !== null) {
       setMovePlan({ drone: moveTarget, destination: geo });
       putMarker({
         key: droneKey(moveTarget.id),
+        droneId: moveTarget.id,
         destination: geo,
         origin: null,
       });
@@ -71,10 +93,23 @@ export default function useDialogs(fleet) {
     // destinatia din plan, nu cea din click: poate fi editata din inputuri
     putMarker({
       key: droneKey(drone.id),
+      droneId: drone.id,
       destination: { latitude: plan.latitude, longitude: plan.longitude },
       origin,
     });
     setMovePlan(null);
+  };
+
+  const confirmAltitude = async (plan) => {
+    const { drone } = altitudeTarget;
+
+    await fleet.moveDrone(drone, {
+      latitude: drone.currentLocation.latitude,
+      longitude: drone.currentLocation.longitude,
+      ...plan,
+    });
+
+    setAltitudeTarget(null);
   };
 
   const confirmAddBase = async (newBase) => {
@@ -191,6 +226,7 @@ export default function useDialogs(fleet) {
 
     globeMarkers,
     handleGlobeClick,
+    dropArrivedOrders,
     hasOrderFor: (droneId) =>
       globeMarkers.some((entry) => entry.key === droneKey(droneId)),
     // anularea opreste drona unde a ajuns si sterge traseul
@@ -213,6 +249,7 @@ export default function useDialogs(fleet) {
     updateMoveDestination: (geo) =>
       putMarker({
         key: droneKey(movePlan.drone.id),
+        droneId: movePlan.drone.id,
         destination: geo,
         origin: null,
       }),
@@ -220,6 +257,11 @@ export default function useDialogs(fleet) {
       dropMarker(droneKey(movePlan.drone.id));
       setMovePlan(null);
     },
+
+    altitudeTarget,
+    openChangeAltitude: (drone) => setAltitudeTarget({ drone }),
+    confirmAltitude,
+    closeAltitude: () => setAltitudeTarget(null),
 
     addingBase,
     startAddBase: () => setAddingBase(true),
