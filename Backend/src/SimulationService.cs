@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Drones
 {
-    public class MovementService : BackgroundService
+    public class SimulationService : BackgroundService
     {
         const int TickMs = 200;
 
@@ -10,7 +10,7 @@ namespace Drones
         readonly SimulationClock clock;
         readonly MoveOrders orders;
 
-        public MovementService(
+        public SimulationService(
             IServiceProvider provider,
             SimulationClock clock,
             MoveOrders orders)
@@ -39,7 +39,7 @@ namespace Drones
                 var elapsed = SimulationTime.Elapsed(previous, current);
                 previous = current;
 
-                if (elapsed <= 0 || orders.IsEmpty) continue;
+                if (elapsed <= 0) continue;
 
                 try
                 {
@@ -54,10 +54,19 @@ namespace Drones
 
         void Tick(double elapsed)
         {
-            var active = orders.Snapshot();
-
             using var scope = provider.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<DroneContext>();
+
+            AdvanceMovement(context, elapsed);
+            AdvanceBatteries(context, elapsed);
+
+            context.SaveChanges();
+        }
+
+        void AdvanceMovement(DroneContext context, double elapsed)
+        {
+            var active = orders.Snapshot();
+            if (active.Count == 0) return;
 
             var ids = active.Select(entry => entry.Key).ToList();
             var drones = context.Drones
@@ -79,8 +88,20 @@ namespace Drones
                 drone.CurrentSpeed.SetSpeed(0f, 0f);
                 orders.Remove(droneId);
             }
+        }
 
-            context.SaveChanges();
+        void AdvanceBatteries(DroneContext context, double elapsed)
+        {
+            var affected = context.Drones
+                .Where(d =>
+                    (d.Status == "online" && d.BatteryLevel > 0)
+                    || (d.Status == "offline" && d.ParkedAtBaseId != null && d.BatteryLevel < 100))
+                .ToList();
+
+            foreach (var drone in affected)
+            {
+                drone.BatteryLevel = Battery.Next(drone, elapsed);
+            }
         }
     }
 }

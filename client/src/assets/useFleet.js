@@ -10,8 +10,13 @@ import {
   removeBaseMesh,
 } from "./Scene/markers.js";
 
-// aliniaza panourile si globul cu rezultatul
-const POLL_MS = 400;
+const POLL_MS = 500;
+
+const isChanging = (drone) =>
+  drone.currentSpeed.horizontal > 0 ||
+  drone.currentSpeed.vertical > 0 ||
+  (drone.status === "online" && drone.batteryLevel > 0) ||
+  (drone.status === "offline" && drone.isInBase && drone.batteryLevel < 100);
 
 export default function useFleet({ objectsRef, globeRef }) {
   const [drones, setDrones] = useState([]);
@@ -105,6 +110,9 @@ export default function useFleet({ objectsRef, globeRef }) {
   const toggleDroneStatus = async (drone) => {
     const nextStatus = drone.status === "offline" ? "online" : "offline";
     applyDroneUpdate(await api.setDroneStatus(drone.id, nextStatus));
+
+    // pornita/oprita -> incepe sa se descarce sau sa se incarce
+    setSyncing(true);
   };
 
   const renameDrone = async (drone, name) => {
@@ -119,10 +127,12 @@ export default function useFleet({ objectsRef, globeRef }) {
     await refreshBases(drone.droneBaseId, baseId, updated.parkedAtBaseId);
   };
 
-  const [flying, setFlying] = useState(false);
+  // cat timp se schimba ceva pe server, recitim flota ca sa se vada in panouri
+  // si pe glob; cand totul e static, ne oprim singuri
+  const [syncing, setSyncing] = useState(true);
 
   useEffect(() => {
-    if (!flying) return;
+    if (!syncing) return;
 
     let stopped = false;
 
@@ -130,25 +140,24 @@ export default function useFleet({ objectsRef, globeRef }) {
       try {
         const drones = await syncDronesFromServer();
 
-        if (!stopped && !drones.some((d) => d.currentSpeed.horizontal > 0)) {
-          setFlying(false);
-        }
+        if (!stopped && !drones.some(isChanging)) setSyncing(false);
       } catch (err) {
         console.error("failed to sync fleet:", err);
       }
     };
 
+    poll();
     const timer = setInterval(poll, POLL_MS);
 
     return () => {
       stopped = true;
       clearInterval(timer);
     };
-  }, [flying]);
+  }, [syncing]);
 
   const moveDrone = async (drone, plan) => {
     applyDroneUpdate(await api.moveDrone(drone.id, plan));
-    setFlying(true);
+    setSyncing(true);
 
     await refreshBases(drone.droneBaseId, drone.parkedAtBaseId);
   };
