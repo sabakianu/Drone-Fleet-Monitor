@@ -191,7 +191,7 @@ namespace Drones.Api
 
                 var homeBase = context.Bases.WithDrones().First(b => b.Id == drone.HomeBase.Id);
 
-                if (homeBase.IsParkingFull && drone.ParkedAtBaseId != homeBase.Id)
+                if (!Move.CanPark(drone, homeBase) && drone.ParkedAtBaseId != homeBase.Id)
                 {
                     return Results.BadRequest(
                         $"Parcarea bazei {homeBase.Name} e plină "

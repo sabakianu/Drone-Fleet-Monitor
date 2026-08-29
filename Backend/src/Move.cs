@@ -53,9 +53,13 @@ namespace Drones
         public static bool SurvivesFall(Location location) =>
             location.Altitude <= SurvivableAltitude;
 
-        public static DroneBase? BaseInRange(Location location, IEnumerable<DroneBase> bases) =>
+        public static bool CanPark(BaseDrone drone, DroneBase droneBase) =>
+            drone.Category == droneBase.Category && !droneBase.IsParkingFull;
+
+        public static DroneBase? BaseInRange(
+            BaseDrone drone, Location location, IEnumerable<DroneBase> bases) =>
             bases.FirstOrDefault(b =>
-                !b.IsParkingFull
+                CanPark(drone, b)
                 && Distance.BetweenKm(location, b.CurrentLocation) <= LandingRadiusKm);
 
         public static void Fall(BaseDrone drone, IEnumerable<DroneBase> bases)
@@ -73,7 +77,7 @@ namespace Drones
 
             drone.Status = DroneStatus.Offline;
 
-            var landingBase = BaseInRange(drone.CurrentLocation, bases);
+            var landingBase = BaseInRange(drone, drone.CurrentLocation, bases);
             if (landingBase != null) drone.ParkedAtBaseId = landingBase.Id;
         }
 

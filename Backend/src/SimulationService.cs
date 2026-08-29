@@ -96,6 +96,7 @@ namespace Drones
                 else if (plan.Altitude <= 0)
                 {
                     var landingBase = Move.BaseInRange(
+                        drone,
                         drone.CurrentLocation,
                         context.Bases.WithDrones().ToList());
 
@@ -129,7 +130,7 @@ namespace Drones
         {
             var droneBase = context.Bases.WithDrones().FirstOrDefault(b => b.Id == baseId);
 
-            if (droneBase == null || droneBase.IsParkingFull) return;
+            if (droneBase == null || !Move.CanPark(drone, droneBase)) return;
 
             drone.CurrentLocation.Altitude = 0f;
             drone.ParkedAtBaseId = droneBase.Id;

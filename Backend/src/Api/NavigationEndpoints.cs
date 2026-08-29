@@ -31,6 +31,7 @@ namespace Drones.Api
                 destination.SetLocation(latitude, longitude, altitude);
 
                 var parkable = Move.BaseInRange(
+                    drone,
                     destination,
                     context.Bases.WithDrones().ToList());
 
