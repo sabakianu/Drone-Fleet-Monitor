@@ -4,6 +4,7 @@ import {
   placeDroneSprite,
   findDroneSprite,
   findBaseMesh,
+  removeDroneSprite,
 } from "./Scene/markers.js";
 
 const POLL_MS = 500;
