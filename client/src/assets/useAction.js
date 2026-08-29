@@ -1,6 +1,5 @@
 import { useState } from "react";
 
-// pt ca atunci cand se face requestul se blocheaza
 export default function useAction() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);

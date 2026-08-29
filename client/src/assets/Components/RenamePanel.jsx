@@ -14,7 +14,6 @@ export default function RenamePanel({
   const { busy, error, run } = useAction();
   const trimmed = name.trim();
 
-  // daca onConfirm pica, dialogul ramane deschis si arata eroarea
   const handleSubmit = (event) => {
     event.preventDefault();
     if (trimmed.length === 0) return;

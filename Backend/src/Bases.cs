@@ -19,16 +19,14 @@ namespace Drones
         public int Id { get; set; }
         public string Name { get; set; } = "";
         public Location CurrentLocation { get; set; } = new Location();
-        public int MaxDroneCapacity { get; set; }      // câte drone pot aparține bazei
-        public int MaxParkingCapacity { get; set; }    // câte drone pot sta parcate în ea
+        public int MaxDroneCapacity { get; set; }
+        public int MaxParkingCapacity { get; set; }
         public string Status { get; set; } = "offline";
 
-        public DroneCategory Category { get; private set; }   // discriminator
+        public DroneCategory Category { get; private set; }
 
-        // dronele care aparțin bazei (pot fi în zbor sau parcate în altă parte)
         public List<BaseDrone> Drones { get; set; } = new();
 
-        // dronele parcate fizic aici, inclusiv cele ale altor baze
         public List<BaseDrone> ParkedDrones { get; set; } = new();
 
         [NotMapped]

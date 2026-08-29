@@ -19,8 +19,8 @@ namespace Drones
 
     public class Speed
     {
-        public float Horizontal { get; set; }   // km/h
-        public float Vertical { get; set; }     // m/s
+        public float Horizontal { get; set; }
+        public float Vertical { get; set; }
 
         public void SetSpeed(float h, float v)
         {
@@ -50,7 +50,7 @@ namespace Drones
         public Location CurrentLocation { get; set; }
         public Speed CurrentSpeed { get; set; }
         public float BatteryLevel { get; set; }
-        string Status { get; set; }
+        DroneStatus Status { get; set; }
     }
 
     public abstract class BaseDrone : IDrone
@@ -60,16 +60,16 @@ namespace Drones
         public Location CurrentLocation { get; set; } = new Location();
         public Speed CurrentSpeed { get; set; } = new Speed();
         public float BatteryLevel { get; set; }
-        public string Status { get; set; } = "offline";
+        public DroneStatus Status { get; set; } = DroneStatus.Offline;
 
-        public DroneKind Kind { get; private set; }        // discriminator
+        public DroneKind Kind { get; private set; }
 
         public int DroneModelId { get; set; }
 
         [JsonIgnore]
         public DroneModel DroneModel { get; set; } = null!;
 
-        public int? DroneBaseId { get; set; }              // baza de care aparține
+        public int? DroneBaseId { get; set; }
 
         [JsonIgnore]
         public DroneBase? HomeBase { get; set; }
@@ -89,18 +89,34 @@ namespace Drones
         public double? BatterySecondsLeft => Battery.SecondsLeft(this);
 
         [NotMapped]
+        public bool CanPowerOn =>
+            Status == DroneStatus.Offline
+            && (BatteryLevel > 0 || ParkedAtBaseId != null);
+
+        [NotMapped]
+        public bool CanPowerOff => Status == DroneStatus.Online;
+
+        [NotMapped]
+        public bool CanMove => Status != DroneStatus.Crashed && BatteryLevel > 0;
+
+        [NotMapped]
+        public bool CanTow =>
+            DroneBaseId != null
+            && Status == DroneStatus.Offline
+            && ParkedAtBaseId == null
+            && CurrentLocation.Altitude <= 0;
+
+        [NotMapped]
         public string? Activity =>
-            Status == "crashed" ? "crashed"
+            Status == DroneStatus.Crashed ? "crashed"
             : CurrentSpeed.Horizontal > 0 || CurrentSpeed.Vertical > 0 ? "moving"
-            : Status == "online" ? "idle"
+            : Status == DroneStatus.Online ? "idle"
             : IsInBase ? "charging"
             : null;
 
-        // parcată la o bază care nu e a ei
         [NotMapped]
         public bool IsVisiting => ParkedAtBaseId != null && ParkedAtBaseId != DroneBaseId;
 
-        // NotMapped -> nu se salveaza in baza de date, vin din DroneModel
         [NotMapped]
         public string Model => DroneModel.Name;
         [NotMapped]

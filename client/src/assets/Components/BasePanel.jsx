@@ -1,12 +1,11 @@
 import { useState } from "react";
 import LocationIcon from "../Icons/Location.png";
-import BatteryIcon from "../Icons/Battery.png";
-import RelocateIcon from "../Icons/Relocate.png";
 import { resolveImage } from "../images.js";
 import useAction from "../useAction.js";
 import ActionButton, { ActionRow } from "./UI/ActionButton.jsx";
 import IconButton from "./UI/IconButton.jsx";
 import Panel, { PanelFooter } from "./UI/Panel.jsx";
+import DroneListRow from "./DroneListRow.jsx";
 import SectionHeading from "./UI/SectionHeading.jsx";
 
 const DRONE_VIEWS = [
@@ -72,7 +71,6 @@ export default function BasePanel({
       caption={`${droneBase.category} Base`}
       onClose={onClose}
     >
-      {/* locatie */}
       <div className="flex flex-col gap-3 mb-4">
         <div>
           <SectionHeading
@@ -99,7 +97,6 @@ export default function BasePanel({
           </div>
         </div>
 
-        {/* capacitate: drone asignate vs. locuri de parcare */}
         <div>
           <h3 className="text-sm font-semibold text-slate-700 mb-1">
             Capacity:
@@ -124,7 +121,6 @@ export default function BasePanel({
           </div>
         </div>
 
-        {/* status */}
         <div>
           <h3 className="text-sm font-semibold text-slate-700">
             Status: {droneBase.status}
@@ -158,9 +154,7 @@ export default function BasePanel({
         </div>
       </div>
 
-      {/*lista drone*/}
       <div className="flex-1 min-h-0 flex flex-col mb-4">
-        {/* switcher intre cele 3 liste */}
         <div className="flex items-center justify-between mb-2">
           <IconButton
             label="Previous list"
@@ -186,60 +180,20 @@ export default function BasePanel({
           </IconButton>
         </div>
 
-        {/* Containerul care face scroll dacă sunt prea multe */}
         <div className="flex-1 overflow-y-auto pr-1 space-y-2 scrollbar-thin scrollbar-thumb-slate-400">
           {visibleDrones.length === 0 && (
             <p className="text-xs text-slate-500 italic">{view.empty}</p>
           )}
 
           {visibleDrones.map((drone, index) => (
-            <div
+            <DroneListRow
               key={drone.id}
+              drone={drone}
+              index={index}
+              disabled={busy}
               onClick={() => onDroneClick(drone)}
-              className="flex items-center justify-between bg-zinc-300/60 p-2 rounded-lg cursor-pointer transition-all duration-200 ease-in-out hover:bg-zinc-300 hover:scale-[1.02] hover:shadow-md active:scale-[0.98] active:shadow-none"
-            >
-              <div className="flex items-center gap-3">
-                {/* index */}
-                <span className="text-xs font-bold text-slate-400 w-3">
-                  {index + 1}
-                </span>
-
-                {/* name/model */}
-                <div className="flex flex-col">
-                  <span className="text-sm font-bold text-slate-700 leading-tight">
-                    {drone.name || `Drone #${drone.id}`}
-                  </span>
-                  <span className="text-xs font-medium text-slate-500">
-                    {drone.model}
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1">
-                  <img
-                    src={BatteryIcon}
-                    alt="Battery"
-                    className="w-4 h-4 object-contain opacity-80"
-                  />
-                  <span className="text-sm font-bold text-slate-800">
-                    {Math.round(drone.batteryLevel)}%
-                  </span>
-                </div>
-
-                <IconButton
-                  icon={RelocateIcon}
-                  label="Relocate drone"
-                  iconClassName="w-4 h-4"
-                  className="p-1"
-                  disabled={busy}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    run(onRelocateDrone, drone);
-                  }}
-                />
-              </div>
-            </div>
+              onRelocate={() => run(onRelocateDrone, drone)}
+            />
           ))}
         </div>
       </div>

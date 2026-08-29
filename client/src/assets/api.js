@@ -33,7 +33,6 @@ export function fetchBases() {
   return request("GET", "/api/bases");
 }
 
-// specificatiile modelelor
 export function fetchDroneCatalog() {
   return request("GET", "/api/drones/catalog");
 }
@@ -53,7 +52,6 @@ export function setDroneName(id, name) {
   );
 }
 
-// schimba doar baza de care apartine drona, nu si pozitia ei
 export function relocateDrone(id, baseId) {
   return request("PUT", `/api/drones/${id}/base?baseId=${baseId}`);
 }
@@ -122,7 +120,6 @@ export function setBaseName(id, name) {
   );
 }
 
-// capacitatile lipsesc din payload: serverul pune valorile implicite
 export function createBase(newBase) {
   return request("POST", "/api/bases/add", newBase);
 }

@@ -35,6 +35,12 @@ public class DroneContext : DbContext
             .OnDelete(DeleteBehavior.SetNull);
 
         modelBuilder.Entity<BaseDrone>()
+            .Property(d => d.Status)
+            .HasConversion(
+                status => status.ToString().ToLowerInvariant(),
+                text => Enum.Parse<DroneStatus>(text, true));
+
+        modelBuilder.Entity<BaseDrone>()
             .HasDiscriminator<DroneKind>("Kind")
             .HasValue<DeliveryDrone>(DroneKind.Delivery)
             .HasValue<SurveyDrone>(DroneKind.Survey)

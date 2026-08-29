@@ -27,19 +27,7 @@ export default function DronePanel({
 
   const droneImg = resolveImage(drone.imagePath);
 
-  const wrecked = drone.status === "crashed";
-
-  const grounded = wrecked || drone.batteryLevel <= 0;
-
-  const stranded =
-    drone.droneBaseId !== null &&
-    drone.status === "offline" &&
-    !drone.isInBase &&
-    drone.currentLocation.altitude <= 0;
-
-  const cannotPowerOn =
-    wrecked ||
-    (drone.status === "offline" && drone.batteryLevel <= 0 && !drone.isInBase);
+  const wrecked = drone.activity === "crashed";
 
   const { busy, error, run } = useAction();
 
@@ -53,7 +41,7 @@ export default function DronePanel({
       caption={`${drone.category} ${drone.kind} Drone`}
       headerAction={
         <>
-          {stranded && (
+          {drone.canTow && (
             <ActionButton
               variant="dark"
               size="small"
@@ -78,7 +66,6 @@ export default function DronePanel({
       }
       onClose={onClose}
     >
-      {/* baterie */}
       <div className="flex items-center gap-2 mb-4">
         <img
           src={BatteryIcon}
@@ -96,7 +83,6 @@ export default function DronePanel({
         <span className="text-xs text-slate-500">({batteryMah} mAh)</span>
       </div>
 
-      {/* locatie */}
       <div className="flex flex-col gap-3 mb-4">
         <div>
           <SectionHeading
@@ -123,7 +109,6 @@ export default function DronePanel({
           </div>
         </div>
 
-        {/* altitudine */}
         <div>
           <SectionHeading
             icon={AltitudeIcon}
@@ -142,7 +127,6 @@ export default function DronePanel({
           </div>
         </div>
 
-        {/* viteza */}
         <div>
           <SectionHeading>Speed:</SectionHeading>
           <div className="flex flex-col gap-1 text-sm text-slate-600 pl-7">
@@ -168,7 +152,6 @@ export default function DronePanel({
         </div>
       </div>
 
-      {/* baza de care apartine */}
       {drone.droneBaseId !== null && (
         <div className="mb-4">
           <h3 className="text-sm font-semibold text-slate-700">
@@ -184,7 +167,6 @@ export default function DronePanel({
         </div>
       )}
 
-      {/* status */}
       <div className="mb-4">
         {!wrecked && (
           <h3 className="text-sm font-semibold text-slate-700">
@@ -210,7 +192,7 @@ export default function DronePanel({
           <ActionButton
             variant="accent"
             onClick={() => run(onToggleStatus, drone)}
-            disabled={busy || cannotPowerOn}
+            disabled={busy || !(drone.canPowerOn || drone.canPowerOff)}
           >
             {drone.status === "offline" ? "Turn On" : "Turn Off"}
           </ActionButton>
@@ -219,7 +201,7 @@ export default function DronePanel({
           <ActionButton
             variant="dark"
             onClick={() => onMove(drone)}
-            disabled={grounded}
+            disabled={!drone.canMove}
           >
             Move
           </ActionButton>

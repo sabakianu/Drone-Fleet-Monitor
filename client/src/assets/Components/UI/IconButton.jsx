@@ -1,4 +1,3 @@
-// buton discret: pictograma (close, relocate) sau un caracter (sagetile ‹ ›)
 export default function IconButton({
   icon,
   label,

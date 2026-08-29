@@ -1,6 +1,5 @@
 import NumberField from "./NumberField.jsx";
 
-// perechea de viteze, cu maximele luate din modelul dronei
 export default function SpeedFields({
   idPrefix,
   drone,

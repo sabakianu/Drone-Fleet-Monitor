@@ -2,14 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import useAction from "../useAction.js";
 import { fetchDroneTrip } from "../api.js";
 import { formatDistance, formatDuration } from "../format.js";
+import { number, inRange } from "../validation.js";
 import ActionButton from "./UI/ActionButton.jsx";
 import Dialog from "./UI/Dialog.jsx";
 import NumberField from "./UI/NumberField.jsx";
 import SpeedFields from "./UI/SpeedFields.jsx";
-
-const number = (value) => (value.trim() === "" ? NaN : Number(value));
-
-const inRange = (value, min, max) => value >= min && value <= max;
 
 const MIN_ALTITUDE = 0;
 const DEFAULT_ALTITUDE = 1;

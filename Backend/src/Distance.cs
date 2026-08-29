@@ -4,7 +4,6 @@ namespace Drones
     {
         const double EarthRadiusKm = 6371.0;
 
-        // haversine: distanta pe suprafata globului intre doua coordonate
         public static double BetweenKm(Location from, Location to)
         {
             var dLat = ToRadians(to.Latitude - from.Latitude);
@@ -18,7 +17,6 @@ namespace Drones
             return 2 * EarthRadiusKm * Math.Asin(Math.Sqrt(h));
         }
 
-        // urca/coboara pana la altitudinea ceruta, apoi zboara pe orizontala
         public static double TravelSeconds(
             Location from,
             Location to,

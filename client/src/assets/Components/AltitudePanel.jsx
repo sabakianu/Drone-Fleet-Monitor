@@ -1,11 +1,10 @@
 import { useState } from "react";
 import useAction from "../useAction.js";
 import { formatDuration } from "../format.js";
+import { number } from "../validation.js";
 import Dialog from "./UI/Dialog.jsx";
 import NumberField from "./UI/NumberField.jsx";
 import SpeedFields from "./UI/SpeedFields.jsx";
-
-const number = (value) => (value.trim() === "" ? NaN : Number(value));
 
 const MIN_ALTITUDE = 0;
 const DEFAULT_ALTITUDE = 1;

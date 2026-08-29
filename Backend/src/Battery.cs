@@ -1,11 +1,10 @@
 namespace Drones
 {
-
     public static class Battery
     {
-        const double FlightMinutes = 4.0;    // pornita, in zbor
-        const double IdleMinutes = 16.0;     // pornita, dar parcata in baza
-        const double ChargeMinutes = 2.0;    // oprita si parcata
+        const double FlightMinutes = 4.0;
+        const double IdleMinutes = 16.0;
+        const double ChargeMinutes = 2.0;
 
         public static double? SecondsLeft(BaseDrone drone)
         {
@@ -22,7 +21,7 @@ namespace Drones
         {
             var parked = drone.ParkedAtBaseId != null;
 
-            if (drone.Status == "offline")
+            if (drone.Status == DroneStatus.Offline)
             {
                 return parked ? PercentPerSimSecond(ChargeMinutes) : 0.0;
             }

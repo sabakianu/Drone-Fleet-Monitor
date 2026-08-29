@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Drones.Api
 {
-    // ceasul simularii
     public static class SimulationEndpoints
     {
         public static void MapSimulationEndpoints(this WebApplication app)

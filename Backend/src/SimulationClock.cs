@@ -2,7 +2,6 @@ using System.Diagnostics;
 
 namespace Drones
 {
-    // ceasul propriu-zis: porneste de la ora serverului si curge chiar si cand
     public class SimulationClock
     {
         readonly object gate = new();
@@ -37,13 +36,11 @@ namespace Drones
         {
             lock (gate)
             {
-                // inchidem intervalul cu viteza veche inainte sa o schimbam
                 Settle();
                 speed = value;
             }
         }
 
-        // aduce ceasul la zi cu timpul real scurs de la ultima citire
         void Settle()
         {
             var now = Stopwatch.GetTimestamp();

@@ -1,7 +1,6 @@
 import useAction from "../useAction.js";
 import Dialog from "./UI/Dialog.jsx";
 
-// confirmarea actiunilor distructive (inlocuieste window.confirm)
 export default function ConfirmPanel({
   title = "Are you sure?",
   message,
@@ -11,7 +10,6 @@ export default function ConfirmPanel({
 }) {
   const { busy, error, run } = useAction();
 
-  // daca onConfirm pica, dialogul ramane deschis si arata eroarea
   const handleSubmit = (event) => {
     event.preventDefault();
     run(onConfirm);

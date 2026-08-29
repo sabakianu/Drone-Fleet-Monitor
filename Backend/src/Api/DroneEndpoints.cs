@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Drones.Api
 {
-    // dronele: liste, creare, redenumire, status, apartenenta, stergere
     public static class DroneEndpoints
     {
         public static void MapDroneEndpoints(this WebApplication app)
@@ -72,41 +71,38 @@ namespace Drones.Api
                 DroneContext context,
                 MoveOrders orders) =>
             {
-                var drone = context.Drones
-                    .Include(d => d.HomeBase)
-                    .FirstOrDefault(d => d.Id == id);
-
-                if (drone == null)
+                if (!context.Drones.Include(d => d.HomeBase)
+                        .TryFindDrone(id, out var drone, out var notFound))
                 {
-                    return Results.NotFound($"Drona cu ID-ul {id} nu a fost găsită.");
+                    return notFound;
                 }
 
-                if (drone.Status == "crashed")
+                if (drone.Status == DroneStatus.Crashed)
                 {
                     return Results.BadRequest("Drona e avariată și nu mai poate fi pornită.");
                 }
 
-                if (status.ToLower() != "online" && status.ToLower() != "offline")
+                if (!Enum.TryParse<DroneStatus>(status, true, out var next)
+                    || next == DroneStatus.Crashed)
                 {
                     return Results.BadRequest("Status invalid. Acceptate: online, offline.");
                 }
 
-                if (status.ToLower() == "online"
+                if (next == DroneStatus.Online
                     && drone.BatteryLevel <= 0
                     && drone.ParkedAtBaseId == null)
                 {
-                    return Results.BadRequest(
-                        "Drona nu are baterie și nu e într-o bază.");
+                    return Results.BadRequest("Drona nu are baterie și nu e într-o bază.");
                 }
 
-                if (status.ToLower() == "offline" && drone.ParkedAtBaseId == null)
+                if (next == DroneStatus.Offline && drone.ParkedAtBaseId == null)
                 {
                     orders.Remove(id);
-                    Move.Fall(drone, context.Bases.Include(b => b.ParkedDrones).ToList());
+                    Move.Fall(drone, context.Bases.WithDrones().ToList());
                 }
                 else
                 {
-                    drone.Status = status.ToLower();
+                    drone.Status = next;
                 }
 
                 context.SaveChanges();
@@ -115,13 +111,10 @@ namespace Drones.Api
             });
             drones.MapPut("/{id}/name", (int id, string name, DroneContext context) =>
             {
-                var drone = context.Drones
-                    .Include(d => d.HomeBase)
-                    .FirstOrDefault(d => d.Id == id);
-
-                if (drone == null)
+                if (!context.Drones.Include(d => d.HomeBase)
+                        .TryFindDrone(id, out var drone, out var notFound))
                 {
-                    return Results.NotFound($"Drona cu ID-ul {id} nu a fost găsită.");
+                    return notFound;
                 }
 
                 if (string.IsNullOrWhiteSpace(name))
@@ -145,14 +138,12 @@ namespace Drones.Api
                 MoveOrders orders,
                 int? parkAtBaseId = null) =>
             {
-                var drone = context.Drones.FirstOrDefault(d => d.Id == id);
-
-                if (drone == null)
+                if (!context.Drones.TryFindDrone(id, out var drone, out var notFound))
                 {
-                    return Results.NotFound($"Drona cu ID-ul {id} nu a fost găsită.");
+                    return notFound;
                 }
 
-                if (drone.Status == "crashed")
+                if (drone.Status == DroneStatus.Crashed)
                 {
                     return Results.BadRequest("Drona e avariată și nu mai poate zbura.");
                 }
@@ -162,33 +153,12 @@ namespace Drones.Api
                     return Results.BadRequest("Drona nu are baterie.");
                 }
 
-                if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180)
-                {
-                    return Results.BadRequest("Coordonatele sunt în afara intervalului.");
-                }
+                var invalid = Move.Validate(
+                    drone, latitude, longitude, altitude, horizontalSpeed, verticalSpeed);
 
-                // 0 e permis: zboara la minim si coboara abia la destinatie
-                if (altitude < 0 || altitude > drone.MaxAltitude)
-                {
-                    return Results.BadRequest(
-                        $"Altitudinea trebuie să fie între 0 și {drone.MaxAltitude} m.");
-                }
+                if (invalid != null) return Results.BadRequest(invalid);
 
-                if (horizontalSpeed <= 0 || horizontalSpeed > drone.MaxHorizontalSpeed)
-                {
-                    return Results.BadRequest(
-                        $"Viteza orizontală trebuie să fie între 0 și {drone.MaxHorizontalSpeed} km/h.");
-                }
-
-                if (verticalSpeed <= 0 || verticalSpeed > drone.MaxVerticalSpeed)
-                {
-                    return Results.BadRequest(
-                        $"Viteza verticală trebuie să fie între 0 și {drone.MaxVerticalSpeed} m/s.");
-                }
-
-                // decoleaza: se porneste singura, iese din parcare si primeste
-                // vitezele alese
-                drone.Status = "online";
+                drone.Status = DroneStatus.Online;
                 drone.ParkedAtBaseId = null;
                 drone.CurrentSpeed.SetSpeed(horizontalSpeed, verticalSpeed);
                 context.SaveChanges();
@@ -202,13 +172,10 @@ namespace Drones.Api
 
             drones.MapPut("/{id}/tow", (int id, DroneContext context, MoveOrders orders) =>
             {
-                var drone = context.Drones
-                    .Include(d => d.HomeBase)
-                    .FirstOrDefault(d => d.Id == id);
-
-                if (drone == null)
+                if (!context.Drones.Include(d => d.HomeBase)
+                        .TryFindDrone(id, out var drone, out var notFound))
                 {
-                    return Results.NotFound($"Drona cu ID-ul {id} nu a fost găsită.");
+                    return notFound;
                 }
 
                 if (drone.HomeBase == null)
@@ -216,14 +183,13 @@ namespace Drones.Api
                     return Results.BadRequest("Drona nu aparține niciunei baze.");
                 }
 
-                if (drone.Status == "online")
+                if (!drone.CanTow)
                 {
-                    return Results.BadRequest("Oprește drona înainte de a o remorca.");
+                    return Results.BadRequest(
+                        "Drona trebuie să fie oprită, la sol, în afara unei baze.");
                 }
 
-                var homeBase = context.Bases
-                    .Include(b => b.ParkedDrones)
-                    .First(b => b.Id == drone.HomeBase.Id);
+                var homeBase = context.Bases.WithDrones().First(b => b.Id == drone.HomeBase.Id);
 
                 if (homeBase.IsParkingFull && drone.ParkedAtBaseId != homeBase.Id)
                 {
@@ -241,7 +207,10 @@ namespace Drones.Api
                 drone.CurrentSpeed.SetSpeed(0f, 0f);
                 drone.ParkedAtBaseId = homeBase.Id;
 
-                if (drone.Status != "crashed") drone.Status = "offline";
+                if (drone.Status != DroneStatus.Crashed)
+                {
+                    drone.Status = DroneStatus.Offline;
+                }
 
                 context.SaveChanges();
 
@@ -250,11 +219,9 @@ namespace Drones.Api
 
             drones.MapDelete("/{id}/move", (int id, DroneContext context, MoveOrders orders) =>
             {
-                var drone = context.Drones.FirstOrDefault(d => d.Id == id);
-
-                if (drone == null)
+                if (!context.Drones.TryFindDrone(id, out var drone, out var notFound))
                 {
-                    return Results.NotFound($"Drona cu ID-ul {id} nu a fost găsită.");
+                    return notFound;
                 }
 
                 orders.Remove(id);
@@ -266,21 +233,15 @@ namespace Drones.Api
 
             drones.MapPut("/{id}/base", (int id, int baseId, DroneContext context) =>
             {
-                var drone = context.Drones.FirstOrDefault(d => d.Id == id);
-
-                if (drone == null)
+                if (!context.Drones.TryFindDrone(id, out var drone, out var notFound))
                 {
-                    return Results.NotFound($"Drona cu ID-ul {id} nu a fost găsită.");
+                    return notFound;
                 }
 
-                var target = context.Bases
-                    .Include(b => b.Drones)
-                    .Include(b => b.ParkedDrones)
-                    .FirstOrDefault(b => b.Id == baseId);
-
-                if (target == null)
+                if (!context.Bases.WithDrones()
+                        .TryFindBase(baseId, out var target, out var baseNotFound))
                 {
-                    return Results.NotFound($"Baza cu ID-ul {baseId} nu a fost găsită.");
+                    return baseNotFound;
                 }
 
                 if (drone.DroneBaseId == target.Id)

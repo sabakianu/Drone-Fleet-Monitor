@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Drones.Api;
 
 namespace Drones
 {
@@ -96,7 +97,7 @@ namespace Drones
                 {
                     var landingBase = Move.BaseInRange(
                         drone.CurrentLocation,
-                        context.Bases.Include(b => b.ParkedDrones).ToList());
+                        context.Bases.WithDrones().ToList());
 
                     if (landingBase != null) Park(context, drone, landingBase.Id);
                 }
@@ -107,8 +108,10 @@ namespace Drones
         {
             var affected = context.Drones
                 .Where(d =>
-                    (d.Status == "online" && d.BatteryLevel > 0)
-                    || (d.Status == "offline" && d.ParkedAtBaseId != null && d.BatteryLevel < 100))
+                    (d.Status == DroneStatus.Online && d.BatteryLevel > 0)
+                    || (d.Status == DroneStatus.Offline
+                        && d.ParkedAtBaseId != null
+                        && d.BatteryLevel < 100))
                 .ToList();
 
             foreach (var drone in affected)
@@ -124,22 +127,20 @@ namespace Drones
 
         static void Park(DroneContext context, BaseDrone drone, int baseId)
         {
-            var droneBase = context.Bases
-                .Include(b => b.ParkedDrones)
-                .FirstOrDefault(b => b.Id == baseId);
+            var droneBase = context.Bases.WithDrones().FirstOrDefault(b => b.Id == baseId);
 
             if (droneBase == null || droneBase.IsParkingFull) return;
 
             drone.CurrentLocation.Altitude = 0f;
             drone.ParkedAtBaseId = droneBase.Id;
-            drone.Status = "offline";
+            drone.Status = DroneStatus.Offline;
         }
 
         void Fall(DroneContext context, BaseDrone drone)
         {
             orders.Remove(drone.Id);
 
-            Move.Fall(drone, context.Bases.Include(b => b.ParkedDrones).ToList());
+            Move.Fall(drone, context.Bases.WithDrones().ToList());
         }
     }
 }

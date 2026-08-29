@@ -5,8 +5,6 @@ import NormalSpeedIcon from "../Icons/NormalSpeed.png";
 import DoubleSpeedIcon from "../Icons/DoubleSpeed.png";
 import TripleSpeedIcon from "../Icons/TripleSpeed.png";
 
-// vitezele si ritmul vin de la server (SimulationTime.cs); aici stau doar
-// pictogramele, in ordinea in care le trimite
 const SPEED_ICONS = [
   StopIcon,
   NormalSpeedIcon,
@@ -29,7 +27,6 @@ function formatClock(totalSeconds) {
 export default function SimClock({ shifted = false }) {
   const timeRef = useRef(null);
 
-  // ora si ritmul curent, actualizate doar la sincronizare cu serverul
   const simRef = useRef(null);
   const rateRef = useRef(0);
 
@@ -55,8 +52,6 @@ export default function SimClock({ shifted = false }) {
     let previous = performance.now();
     let frameId;
 
-    // intre sincronizari extrapolam local: la 10x, un fetch pe cadru ar fi
-    // absurd. ritmul e cel primit de la server, nu o constanta de aici
     const tick = () => {
       const current = performance.now();
       const delta = (current - previous) / 1000;
@@ -79,7 +74,6 @@ export default function SimClock({ shifted = false }) {
     return () => cancelAnimationFrame(frameId);
   }, []);
 
-  // serverul e sursa de adevar: trimitem viteza si repornim de la ce raspunde
   const pushSpeed = (value) =>
     setSimulationSpeed(value)
       .then(apply)
@@ -101,13 +95,11 @@ export default function SimClock({ shifted = false }) {
       }
 
       if (event.key === " ") {
-        // altfel spatiul deruleaza pagina si re-apasa butonul focusat
         event.preventDefault();
         togglePause();
         return;
       }
 
-      // 1, 2, 3 aleg vitezele nenule, in ordinea din lista serverului
       const index = Number(event.key);
       if (index >= 1 && index <= 3 && clock) {
         const speed = clock.speeds[index];
@@ -120,8 +112,6 @@ export default function SimClock({ shifted = false }) {
   }, [clock]);
 
   return (
-    // panoul dronei sta peste ceas, asa ca il trimitem in dreapta lui.
-    // 82.25 = latimea panoului (w-80) plus marginea lui stanga (left-2.25)
     <div
       className={`absolute top-3.5 left-2.25 z-40 w-48 bg-zinc-200 shadow-xl rounded-xl p-3 border-2 border-zinc-300 flex flex-col gap-2 transition-transform duration-300 ease-out ${
         shifted ? "translate-x-82.25" : ""

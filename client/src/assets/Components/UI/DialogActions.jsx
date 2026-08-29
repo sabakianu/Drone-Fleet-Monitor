@@ -1,7 +1,6 @@
 import CancelIcon from "../../Icons/Cancel.png";
 import OkeyIcon from "../../Icons/Okey.png";
 
-// perechea Cancel / OK din josul dialogurilor
 export default function DialogActions({
   onCancel,
   busy = false,

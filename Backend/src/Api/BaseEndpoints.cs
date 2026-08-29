@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Drones.Api
 {
-    // bazele: liste, creare, redenumire, status, decomisionare, adaugare drone
     public static class BaseEndpoints
     {
         const int DefaultDroneCapacity = 5;
@@ -13,18 +12,14 @@ namespace Drones.Api
 
             bases.MapGet("", (DroneContext context) =>
             {
-                var bases = context.Bases
-                    .Include(b => b.Drones)
-                    .Include(b => b.ParkedDrones)
+                var bases = context.Bases.WithDrones()
                     .ToList();
 
                 return Results.Ok(bases);
             });
             bases.MapGet("/civilian", (DroneContext context) =>
             {
-                var civilianBases = context.Bases
-                    .Include(b => b.Drones)
-                    .Include(b => b.ParkedDrones)
+                var civilianBases = context.Bases.WithDrones()
                     .OfType<CivilianBase>()
                     .ToList();
 
@@ -32,9 +27,7 @@ namespace Drones.Api
             });
             bases.MapGet("/military", (DroneContext context) =>
             {
-                var militaryBases = context.Bases
-                    .Include(b => b.Drones)
-                    .Include(b => b.ParkedDrones)
+                var militaryBases = context.Bases.WithDrones()
                     .OfType<MilitaryBase>()
                     .ToList();
 
@@ -42,14 +35,10 @@ namespace Drones.Api
             });
             bases.MapGet("/{id}", (int id, DroneContext context) =>
             {
-                var droneBase = context.Bases
-                    .Include(b => b.Drones)
-                    .Include(b => b.ParkedDrones)
-                    .FirstOrDefault(b => b.Id == id);
-
-                if (droneBase == null)
+                if (!context.Bases.WithDrones()
+                        .TryFindBase(id, out var droneBase, out var notFound))
                 {
-                    return Results.NotFound($"Baza cu ID-ul {id} nu a fost găsită.");
+                    return notFound;
                 }
 
                 return Results.Ok(droneBase);
@@ -87,8 +76,6 @@ namespace Drones.Api
 
                 newBase.Name = request.Name.Trim();
 
-                // parcarea are cateva locuri peste capacitate, ca sa poata primi
-                // si drone vizitatoare - aceeasi regula ca la bazele existente
                 newBase.MaxDroneCapacity = request.MaxDroneCapacity ?? DefaultDroneCapacity;
                 newBase.MaxParkingCapacity =
                     request.MaxParkingCapacity ?? newBase.MaxDroneCapacity + 2;
@@ -102,14 +89,10 @@ namespace Drones.Api
             });
             bases.MapPost("/{id}/drones", (int id, string type, string? name, DroneContext context) =>
             {
-                var droneBase = context.Bases
-                    .Include(b => b.Drones)
-                    .Include(b => b.ParkedDrones)
-                    .FirstOrDefault(b => b.Id == id);
-
-                if (droneBase == null)
+                if (!context.Bases.WithDrones()
+                        .TryFindBase(id, out var droneBase, out var notFound))
                 {
-                    return Results.NotFound($"Baza cu ID-ul {id} nu a fost găsită.");
+                    return notFound;
                 }
 
                 if (droneBase.IsFull)
@@ -156,14 +139,10 @@ namespace Drones.Api
             });
             bases.MapPut("/{id}/status", (int id, string status, DroneContext context) =>
             {
-                var droneBase = context.Bases
-                    .Include(b => b.Drones)
-                    .Include(b => b.ParkedDrones)
-                    .FirstOrDefault(b => b.Id == id);
-
-                if (droneBase == null)
+                if (!context.Bases.WithDrones()
+                        .TryFindBase(id, out var droneBase, out var notFound))
                 {
-                    return Results.NotFound($"Baza cu ID-ul {id} nu a fost găsită.");
+                    return notFound;
                 }
 
                 if (status.ToLower() != "online" && status.ToLower() != "offline")
@@ -178,14 +157,10 @@ namespace Drones.Api
             });
             bases.MapPut("/{id}/name", (int id, string name, DroneContext context) =>
             {
-                var droneBase = context.Bases
-                    .Include(b => b.Drones)
-                    .Include(b => b.ParkedDrones)
-                    .FirstOrDefault(b => b.Id == id);
-
-                if (droneBase == null)
+                if (!context.Bases.WithDrones()
+                        .TryFindBase(id, out var droneBase, out var notFound))
                 {
-                    return Results.NotFound($"Baza cu ID-ul {id} nu a fost găsită.");
+                    return notFound;
                 }
 
                 if (string.IsNullOrWhiteSpace(name))
@@ -200,14 +175,10 @@ namespace Drones.Api
             });
             bases.MapDelete("/{id}", (int id, DroneContext context) =>
             {
-                var droneBase = context.Bases
-                    .Include(b => b.Drones)
-                    .Include(b => b.ParkedDrones)
-                    .FirstOrDefault(b => b.Id == id);
-
-                if (droneBase == null)
+                if (!context.Bases.WithDrones()
+                        .TryFindBase(id, out var droneBase, out var notFound))
                 {
-                    return Results.NotFound($"Baza cu ID-ul {id} nu a fost găsită.");
+                    return notFound;
                 }
 
                 var destroyed = droneBase.ParkedDrones
@@ -242,7 +213,6 @@ namespace Drones.Api
                 var deleted = context.Bases.ExecuteDelete();
                 return Results.Ok(new { deleted });
             });
-
 
             using (var scope = app.Services.CreateScope())
             {

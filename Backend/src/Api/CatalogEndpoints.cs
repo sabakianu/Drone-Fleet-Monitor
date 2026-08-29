@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Drones.Api
 {
-    // catalogul de modele (DroneModels)
     public static class CatalogEndpoints
     {
         public static void MapCatalogEndpoints(this WebApplication app)

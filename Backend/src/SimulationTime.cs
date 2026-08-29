@@ -13,7 +13,6 @@ namespace Drones
         public static double Advance(double simSeconds, double realSeconds, int speed) =>
             Wrap(simSeconds + realSeconds * SimSecondsPerRealSecond(speed));
 
-        // cat timp simulat a trecut intre doua citiri, tinand cont ca ziua se reia
         public static double Elapsed(double previous, double current) =>
             Wrap(current - previous);
 

@@ -17,6 +17,39 @@ namespace Drones
 
         public const double LandingRadiusKm = 100.0;
 
+        public static string? Validate(
+            BaseDrone drone,
+            float latitude,
+            float longitude,
+            float altitude,
+            float horizontalSpeed,
+            float verticalSpeed)
+        {
+            if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180)
+            {
+                return "Coordonatele sunt în afara intervalului.";
+            }
+
+            if (altitude < 0 || altitude > drone.MaxAltitude)
+            {
+                return $"Altitudinea trebuie să fie între 0 și {drone.MaxAltitude} m.";
+            }
+
+            if (horizontalSpeed <= 0 || horizontalSpeed > drone.MaxHorizontalSpeed)
+            {
+                return $"Viteza orizontală trebuie să fie între 0 și "
+                     + $"{drone.MaxHorizontalSpeed} km/h.";
+            }
+
+            if (verticalSpeed <= 0 || verticalSpeed > drone.MaxVerticalSpeed)
+            {
+                return $"Viteza verticală trebuie să fie între 0 și "
+                     + $"{drone.MaxVerticalSpeed} m/s.";
+            }
+
+            return null;
+        }
+
         public static bool SurvivesFall(Location location) =>
             location.Altitude <= SurvivableAltitude;
 
@@ -34,11 +67,11 @@ namespace Drones
 
             if (!survives)
             {
-                drone.Status = "crashed";
+                drone.Status = DroneStatus.Crashed;
                 return;
             }
 
-            drone.Status = "offline";
+            drone.Status = DroneStatus.Offline;
 
             var landingBase = BaseInRange(drone.CurrentLocation, bases);
             if (landingBase != null) drone.ParkedAtBaseId = landingBase.Id;

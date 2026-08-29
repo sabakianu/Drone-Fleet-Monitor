@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Drones.Api
 {
-    // distante si timp de zbor (Distance.cs)
     public static class NavigationEndpoints
     {
         public static void MapNavigationEndpoints(this WebApplication app)
@@ -18,24 +17,22 @@ namespace Drones.Api
                 float verticalSpeed,
                 DroneContext context) =>
             {
-                var drone = context.Drones.FirstOrDefault(d => d.Id == id);
-
-                if (drone == null)
+                if (!context.Drones.TryFindDrone(id, out var drone, out var notFound))
                 {
-                    return Results.NotFound($"Drona cu ID-ul {id} nu a fost găsită.");
+                    return notFound;
                 }
 
-                if (horizontalSpeed <= 0 || verticalSpeed <= 0)
-                {
-                    return Results.BadRequest("Vitezele trebuie să fie mai mari decât zero.");
-                }
+                var invalid = Move.Validate(
+                    drone, latitude, longitude, altitude, horizontalSpeed, verticalSpeed);
+
+                if (invalid != null) return Results.BadRequest(invalid);
 
                 var destination = new Location();
                 destination.SetLocation(latitude, longitude, altitude);
 
                 var parkable = Move.BaseInRange(
                     destination,
-                    context.Bases.Include(b => b.ParkedDrones).ToList());
+                    context.Bases.WithDrones().ToList());
 
                 return Results.Ok(new
                 {
@@ -49,11 +46,9 @@ namespace Drones.Api
             });
             drones.MapGet("/{id}/distances", (int id, DroneContext context) =>
             {
-                var drone = context.Drones.FirstOrDefault(d => d.Id == id);
-
-                if (drone == null)
+                if (!context.Drones.TryFindDrone(id, out var drone, out var notFound))
                 {
-                    return Results.NotFound($"Drona cu ID-ul {id} nu a fost găsită.");
+                    return notFound;
                 }
 
                 var distances = context.Bases

@@ -4,13 +4,10 @@ using Drones.Api;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
 builder.Services.ConfigureHttpJsonOptions(o =>
     o.SerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
-
 
 builder.Services.AddSingleton<SimulationClock>();
 builder.Services.AddSingleton<MoveOrders>();
@@ -21,7 +18,6 @@ builder.Services.AddDbContext<DroneContext>(options =>
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();

@@ -92,7 +92,6 @@ export function spawnBase(globe, droneBase, objectsArray) {
   return baseMesh;
 }
 
-// dronele parcate în bază nu au sprite pe glob -> poate lipsi
 export function findDroneSprite(objectsArray, droneId) {
   return objectsArray.find(
     (obj) => obj.userData.type === "drone" && obj.userData.drone.id === droneId,
@@ -106,7 +105,6 @@ export function findBaseMesh(objectsArray, baseId) {
   );
 }
 
-// scoate sprite-ul din raycast, de pe glob, și eliberează textura de pe GPU
 export function removeDroneSprite(objectsArray, droneId) {
   const sprite = findDroneSprite(objectsArray, droneId);
   if (!sprite) return;
@@ -125,7 +123,7 @@ export function removeBaseMesh(objectsArray, baseId) {
   baseMesh.parent?.remove(baseMesh);
   baseMesh.material.map?.dispose();
   baseMesh.material.dispose();
-  // spre deosebire de sprite, PlaneGeometry e a lui -> o eliberăm
+
   baseMesh.geometry.dispose();
 }
 

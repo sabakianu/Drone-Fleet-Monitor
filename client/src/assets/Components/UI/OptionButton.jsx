@@ -1,4 +1,3 @@
-// optiune selectabila dintr-o lista (baze, modele de drona)
 export default function OptionButton({
   selected = false,
   className = "",

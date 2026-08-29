@@ -1,11 +1,6 @@
 import { useEffect } from "react";
 import { spawnGlobeMarker, removeGlobeMarker } from "./markers.js";
 
-// cate un marker pe glob per intrare din lista. marker.origin lipseste cat
-// timp se alege punctul si apare dupa confirmare, odata cu traseul.
-//
-// pentru o drona in zbor traseul pleaca din pozitia ei curenta, nu din cea de
-// decolare, asa ca bucata deja parcursa dispare pe masura ce inainteaza
 export default function useGlobeMarkers({ globeRef, markers, drones }) {
   useEffect(() => {
     const globe = globeRef.current;
@@ -14,7 +9,6 @@ export default function useGlobeMarkers({ globeRef, markers, drones }) {
     const byId = new Map(drones.map((drone) => [drone.id, drone]));
 
     const groups = markers.map((marker) => {
-      // fara origin nu s-a pornit nimic: se vede doar tinta, fara traseu
       if (marker.origin === null) {
         return spawnGlobeMarker(globe, marker.destination, null);
       }

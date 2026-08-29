@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import useAction from "../useAction.js";
+import { number, inRange, wholeAtLeast } from "../validation.js";
 import Dialog from "./UI/Dialog.jsx";
 import Dropdown from "./UI/Dropdown.jsx";
 import NumberField from "./UI/NumberField.jsx";
@@ -9,10 +10,6 @@ const CATEGORIES = [
   { value: "Civilian", label: "Civilian" },
   { value: "Military", label: "Military" },
 ];
-
-const number = (value) => (value.trim() === "" ? NaN : Number(value));
-
-const inRange = (value, min, max) => value >= min && value <= max;
 
 export default function AddBasePanel({
   location,
@@ -35,15 +32,13 @@ export default function AddBasePanel({
   const parking = number(parkingCapacity);
   const trimmed = name.trim();
 
-  const whole = (value) => Number.isInteger(value) && value >= 1;
-
   const invalid = {
     name: trimmed.length === 0,
     category: category === null,
     latitude: !inRange(lat, -90, 90),
     longitude: !inRange(lon, -180, 180),
-    droneCapacity: !whole(drones),
-    parkingCapacity: !whole(parking),
+    droneCapacity: !wholeAtLeast(drones, 1),
+    parkingCapacity: !wholeAtLeast(parking, 1),
   };
 
   const hasErrors = Object.values(invalid).some(Boolean);

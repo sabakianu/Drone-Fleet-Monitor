@@ -16,37 +16,55 @@ import useGlobeScene from "./assets/Scene/useGlobeScene.js";
 import useGlobeMarkers from "./assets/Scene/useGlobeMarkers.js";
 import { centerGlobeOn } from "./assets/Scene/globe.js";
 import useFleet from "./assets/useFleet.js";
-import useDialogs from "./assets/useDialogs.js";
+import useMarkers from "./assets/dialogs/useMarkers.js";
+import useFlightOrders from "./assets/dialogs/useFlightOrders.js";
+import useBaseCreation from "./assets/dialogs/useBaseCreation.js";
+import useEntityDialogs from "./assets/dialogs/useEntityDialogs.js";
+import useConfirm from "./assets/dialogs/useConfirm.js";
 
 export default function App() {
-  // sprite-urile si globul sunt partajate intre scena si actiunile pe flota
   const objectsRef = useRef([]);
   const globeRef = useRef(null);
 
   const fleet = useFleet({ objectsRef, globeRef });
-  const dialogs = useDialogs(fleet);
+  const markers = useMarkers();
+  const flight = useFlightOrders(fleet, markers);
+  const newBase = useBaseCreation(fleet, markers);
+  const dialogs = useEntityDialogs(fleet);
+  const confirm = useConfirm(fleet);
+
+  const picking = flight.moveTarget !== null || newBase.picking;
+
+  const handleGlobeClick = (geo) => {
+    if (flight.moveTarget !== null) return flight.pickDestination(geo);
+    if (newBase.picking) return newBase.pickLocation(geo);
+  };
+
+  const cancelPick = () => {
+    flight.cancelMove();
+    newBase.cancel();
+  };
 
   const mountRef = useGlobeScene({
     objectsRef,
     globeRef,
     onSelectDrone: fleet.setSelectedDrone,
     onSelectBase: fleet.setSelectedBase,
-    onGlobeClick: dialogs.handleGlobeClick,
-    picking: dialogs.picking,
-    onCancelPick: dialogs.cancelPick,
+    onGlobeClick: handleGlobeClick,
+    picking: picking,
+    onCancelPick: cancelPick,
   });
 
   useGlobeMarkers({
     globeRef,
-    markers: dialogs.globeMarkers,
+    markers: markers.list,
     drones: fleet.drones,
   });
 
   useEffect(() => {
-    dialogs.dropArrivedOrders(fleet.drones);
+    markers.dropArrived(fleet.drones);
   }, [fleet.drones]);
 
-  // globul poate lipsi pana se incarca harta
   const centerOn = (location) => {
     if (globeRef.current) centerGlobeOn(globeRef.current, location);
   };
@@ -70,7 +88,7 @@ export default function App() {
           variant="dark"
           grow={false}
           className="px-4"
-          onClick={dialogs.startAddBase}
+          onClick={newBase.start}
         >
           Add Base
         </ActionButton>
@@ -82,17 +100,17 @@ export default function App() {
           onClose={() => fleet.setSelectedDrone(null)}
           onRename={dialogs.openRenameDrone}
           onToggleStatus={fleet.toggleDroneStatus}
-          onMove={dialogs.startMove}
+          onMove={flight.startMove}
           onCenterLocation={centerOn}
-          onChangeAltitude={dialogs.openChangeAltitude}
+          onChangeAltitude={flight.openChangeAltitude}
           onTowBack={fleet.towDrone}
           onOpenBase={fleet.openBase}
           onCancelOrder={
-            dialogs.hasOrderFor(fleet.selectedDrone.id)
-              ? () => dialogs.cancelOrder(fleet.selectedDrone)
+            flight.hasOrderFor(fleet.selectedDrone.id)
+              ? () => flight.cancelOrder(fleet.selectedDrone)
               : null
           }
-          onDestroy={dialogs.askDestroyDrone}
+          onDestroy={confirm.askDestroyDrone}
         />
       )}
 
@@ -106,7 +124,7 @@ export default function App() {
           onRelocateDrone={dialogs.openRelocateDrone}
           onCenterLocation={centerOn}
           onToggleStatus={fleet.toggleBaseStatus}
-          onDecommission={dialogs.askDecommissionBase}
+          onDecommission={confirm.askDecommissionBase}
         />
       )}
 
@@ -139,48 +157,48 @@ export default function App() {
         />
       )}
 
-      {dialogs.movePlan && (
+      {flight.movePlan && (
         <MovePanel
-          drone={dialogs.movePlan.drone}
-          destination={dialogs.movePlan.destination}
-          onDestinationChange={dialogs.updateMoveDestination}
-          onCancel={dialogs.closeMove}
-          onConfirm={dialogs.confirmMove}
+          drone={flight.movePlan.drone}
+          destination={flight.movePlan.destination}
+          onDestinationChange={flight.updateDestination}
+          onCancel={flight.closeMove}
+          onConfirm={flight.confirmMove}
         />
       )}
 
-      {dialogs.altitudeTarget && (
+      {flight.altitudeTarget && (
         <AltitudePanel
-          drone={dialogs.altitudeTarget.drone}
-          onCancel={dialogs.closeAltitude}
-          onConfirm={dialogs.confirmAltitude}
+          drone={flight.altitudeTarget.drone}
+          onCancel={flight.closeAltitude}
+          onConfirm={flight.confirmAltitude}
         />
       )}
 
-      {dialogs.addBasePlan && (
+      {newBase.plan && (
         <AddBasePanel
-          location={dialogs.addBasePlan.location}
-          onLocationChange={dialogs.updateAddBaseLocation}
-          onCancel={dialogs.closeAddBase}
-          onConfirm={dialogs.confirmAddBase}
+          location={newBase.plan.location}
+          onLocationChange={newBase.updateLocation}
+          onCancel={newBase.close}
+          onConfirm={newBase.confirm}
         />
       )}
 
-      {dialogs.moveTarget && (
-        <CursorIcon cursor={RelocateCursor} onCancel={dialogs.cancelMove} />
+      {flight.moveTarget && (
+        <CursorIcon cursor={RelocateCursor} onCancel={flight.cancelMove} />
       )}
 
-      {dialogs.addingBase && (
-        <CursorIcon cursor={LocationCursor} onCancel={dialogs.cancelAddBase} />
+      {newBase.picking && (
+        <CursorIcon cursor={LocationCursor} onCancel={newBase.cancel} />
       )}
 
-      {dialogs.confirmTarget && (
+      {confirm.target && (
         <ConfirmPanel
-          title={dialogs.confirmTarget.title}
-          message={dialogs.confirmTarget.message}
-          confirmLabel={dialogs.confirmTarget.confirmLabel}
-          onCancel={dialogs.closeConfirm}
-          onConfirm={dialogs.confirmAction}
+          title={confirm.target.title}
+          message={confirm.target.message}
+          confirmLabel={confirm.target.confirmLabel}
+          onCancel={confirm.close}
+          onConfirm={confirm.confirm}
         />
       )}
     </div>
