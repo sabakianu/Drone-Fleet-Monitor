@@ -11,6 +11,7 @@ builder.Services.ConfigureHttpJsonOptions(o =>
 
 builder.Services.AddSingleton<SimulationClock>();
 builder.Services.AddSingleton<MoveOrders>();
+builder.Services.AddSingleton<EventLog>();
 builder.Services.AddHostedService<SimulationService>();
 
 builder.Services.AddDbContext<DroneContext>(options =>

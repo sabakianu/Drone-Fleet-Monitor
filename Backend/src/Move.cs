@@ -54,7 +54,9 @@ namespace Drones
             location.Altitude <= SurvivableAltitude;
 
         public static bool CanPark(BaseDrone drone, DroneBase droneBase) =>
-            drone.Category == droneBase.Category && !droneBase.IsParkingFull;
+            droneBase.Status == "online"
+            && drone.Category == droneBase.Category
+            && !droneBase.IsParkingFull;
 
         public static DroneBase? BaseInRange(
             BaseDrone drone, Location location, IEnumerable<DroneBase> bases) =>

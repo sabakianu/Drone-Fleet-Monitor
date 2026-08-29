@@ -69,7 +69,8 @@ namespace Drones.Api
                 int id,
                 string status,
                 DroneContext context,
-                MoveOrders orders) =>
+                MoveOrders orders,
+                EventLog log) =>
             {
                 if (!context.Drones.Include(d => d.HomeBase)
                         .TryFindDrone(id, out var drone, out var notFound))
@@ -98,11 +99,17 @@ namespace Drones.Api
                 if (next == DroneStatus.Offline && drone.ParkedAtBaseId == null)
                 {
                     orders.Remove(id);
+
+                    var height = drone.CurrentLocation.Altitude;
                     Move.Fall(drone, context.Bases.WithDrones().ToList());
+
+                    log.Fall(drone, height);
                 }
                 else
                 {
                     drone.Status = next;
+
+                    log.Add("power", $"{drone.Label} is now {next.ToString().ToLower()}");
                 }
 
                 context.SaveChanges();
@@ -136,6 +143,7 @@ namespace Drones.Api
                 float verticalSpeed,
                 DroneContext context,
                 MoveOrders orders,
+                EventLog log,
                 int? parkAtBaseId = null) =>
             {
                 if (!context.Drones.TryFindDrone(id, out var drone, out var notFound))
@@ -167,10 +175,18 @@ namespace Drones.Api
                     latitude, longitude, altitude,
                     horizontalSpeed, verticalSpeed, parkAtBaseId));
 
+                log.Add("takeoff",
+                    $"{drone.Label} took off for {latitude:0.00}, {longitude:0.00}"
+                    + $" at {altitude:0} m");
+
                 return Results.Ok(drone);
             });
 
-            drones.MapPut("/{id}/tow", (int id, DroneContext context, MoveOrders orders) =>
+            drones.MapPut("/{id}/tow", (
+                int id,
+                DroneContext context,
+                MoveOrders orders,
+                EventLog log) =>
             {
                 if (!context.Drones.Include(d => d.HomeBase)
                         .TryFindDrone(id, out var drone, out var notFound))
@@ -214,10 +230,16 @@ namespace Drones.Api
 
                 context.SaveChanges();
 
+                log.Add("tow", $"{drone.Label} was towed back to {homeBase.Name}");
+
                 return Results.Ok(drone);
             });
 
-            drones.MapDelete("/{id}/move", (int id, DroneContext context, MoveOrders orders) =>
+            drones.MapDelete("/{id}/move", (
+                int id,
+                DroneContext context,
+                MoveOrders orders,
+                EventLog log) =>
             {
                 if (!context.Drones.TryFindDrone(id, out var drone, out var notFound))
                 {
@@ -227,6 +249,8 @@ namespace Drones.Api
                 orders.Remove(id);
                 drone.CurrentSpeed.SetSpeed(0f, 0f);
                 context.SaveChanges();
+
+                log.Add("cancel", $"{drone.Label}: flight order cancelled");
 
                 return Results.Ok(drone);
             });
@@ -268,19 +292,19 @@ namespace Drones.Api
 
                 return Results.Ok(drone);
             });
-            drones.MapDelete("/{id}", (int id, DroneContext context) =>
+            drones.MapDelete("/{id}", (int id, DroneContext context, EventLog log) =>
             {
-                var drone = context.Drones.FirstOrDefault(d => d.Id == id);
-
-                if (drone != null)
+                if (!context.Drones.TryFindDrone(id, out var drone, out var notFound))
                 {
-                    context.Drones.Remove(drone);
-                    context.SaveChanges();
-                    return Results.Ok(drone);
-
+                    return notFound;
                 }
 
-                return Results.NotFound($"Drona cu ID-ul {id} nu a fost găsită.");
+                context.Drones.Remove(drone);
+                context.SaveChanges();
+
+                log.Add("destroyed", $"{drone.Label} was destroyed");
+
+                return Results.Ok(drone);
             });
             drones.MapDelete("", (DroneContext context) =>
             {

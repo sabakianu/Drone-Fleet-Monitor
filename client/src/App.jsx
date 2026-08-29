@@ -9,6 +9,7 @@ import MovePanel from "./assets/Components/MovePanel.jsx";
 import AddBasePanel from "./assets/Components/AddBasePanel.jsx";
 import AltitudePanel from "./assets/Components/AltitudePanel.jsx";
 import SimClock from "./assets/Components/SimClock.jsx";
+import LogPanel from "./assets/Components/LogPanel.jsx";
 import ActionButton from "./assets/Components/UI/ActionButton.jsx";
 import CursorIcon from "./assets/Components/UI/CursorIcon.jsx";
 import { RelocateCursor, LocationCursor } from "./assets/cursors.js";
@@ -78,6 +79,8 @@ export default function App() {
       />
 
       <SimClock shifted={fleet.selectedDrone !== null} />
+
+      <LogPanel />
 
       <div
         className={`absolute bottom-4.5 right-2.25 z-40 flex transition-transform duration-300 ease-out ${

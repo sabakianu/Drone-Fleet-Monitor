@@ -10,15 +10,18 @@ namespace Drones
         readonly IServiceProvider provider;
         readonly SimulationClock clock;
         readonly MoveOrders orders;
+        readonly EventLog log;
 
         public SimulationService(
             IServiceProvider provider,
             SimulationClock clock,
-            MoveOrders orders)
+            MoveOrders orders,
+            EventLog log)
         {
             this.provider = provider;
             this.clock = clock;
             this.orders = orders;
+            this.log = log;
         }
 
         protected override async Task ExecuteAsync(CancellationToken token)
@@ -89,6 +92,8 @@ namespace Drones
                 drone.CurrentSpeed.SetSpeed(0f, 0f);
                 orders.Remove(droneId);
 
+                log.Add("arrived", $"{drone.Label} reached its destination");
+
                 if (plan.ParkAtBaseId != null)
                 {
                     Park(context, drone, plan.ParkAtBaseId.Value);
@@ -108,10 +113,12 @@ namespace Drones
         void AdvanceBatteries(DroneContext context, double elapsed)
         {
             var affected = context.Drones
+                .Include(d => d.ParkedAtBase)
                 .Where(d =>
                     (d.Status == DroneStatus.Online && d.BatteryLevel > 0)
                     || (d.Status == DroneStatus.Offline
-                        && d.ParkedAtBaseId != null
+                        && d.ParkedAtBase != null
+                        && d.ParkedAtBase.Status == "online"
                         && d.BatteryLevel < 100))
                 .ToList();
 
@@ -126,7 +133,7 @@ namespace Drones
             }
         }
 
-        static void Park(DroneContext context, BaseDrone drone, int baseId)
+        void Park(DroneContext context, BaseDrone drone, int baseId)
         {
             var droneBase = context.Bases.WithDrones().FirstOrDefault(b => b.Id == baseId);
 
@@ -135,13 +142,18 @@ namespace Drones
             drone.CurrentLocation.Altitude = 0f;
             drone.ParkedAtBaseId = droneBase.Id;
             drone.Status = DroneStatus.Offline;
+
+            log.Add("parked", $"{drone.Label} parked at {droneBase.Name}");
         }
 
         void Fall(DroneContext context, BaseDrone drone)
         {
             orders.Remove(drone.Id);
 
+            var height = drone.CurrentLocation.Altitude;
             Move.Fall(drone, context.Bases.WithDrones().ToList());
+
+            log.Fall(drone, height);
         }
     }
 }

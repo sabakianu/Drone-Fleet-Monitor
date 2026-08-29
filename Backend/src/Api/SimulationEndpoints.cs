@@ -6,6 +6,9 @@ namespace Drones.Api
     {
         public static void MapSimulationEndpoints(this WebApplication app)
         {
+            app.MapGet("/api/log", (int after, EventLog log) =>
+                Results.Ok(log.Since(after)));
+
             var simulation = app.MapGroup("/api/simulation");
 
             simulation.MapGet("/clock", (SimulationClock clock) =>

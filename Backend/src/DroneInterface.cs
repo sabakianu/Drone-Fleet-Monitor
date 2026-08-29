@@ -89,6 +89,10 @@ namespace Drones
         public double? BatterySecondsLeft => Battery.SecondsLeft(this);
 
         [NotMapped]
+        public string Label =>
+            string.IsNullOrWhiteSpace(Name) ? $"Drone #{Id}" : Name;
+
+        [NotMapped]
         public bool CanPowerOn =>
             Status == DroneStatus.Offline
             && (BatteryLevel > 0 || ParkedAtBaseId != null);

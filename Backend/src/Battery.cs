@@ -20,10 +20,11 @@ namespace Drones
         public static double RatePerSimSecond(BaseDrone drone)
         {
             var parked = drone.ParkedAtBaseId != null;
+            var charging = parked && drone.ParkedAtBase?.Status == "online";
 
             if (drone.Status == DroneStatus.Offline)
             {
-                return parked ? PercentPerSimSecond(ChargeMinutes) : 0.0;
+                return charging ? PercentPerSimSecond(ChargeMinutes) : 0.0;
             }
 
             return parked

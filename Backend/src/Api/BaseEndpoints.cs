@@ -43,7 +43,7 @@ namespace Drones.Api
 
                 return Results.Ok(droneBase);
             });
-            bases.MapPost("/add", (NewBaseRequest request, DroneContext context) =>
+            bases.MapPost("/add", (NewBaseRequest request, DroneContext context, EventLog log) =>
             {
                 DroneBase? newBase = request.Category.ToLower() switch
                 {
@@ -85,9 +85,16 @@ namespace Drones.Api
                 context.Bases.Add(newBase);
                 context.SaveChanges();
 
+                log.Add("base", $"Base {newBase.Name} ({newBase.Category}) was built");
+
                 return Results.Ok(newBase);
             });
-            bases.MapPost("/{id}/drones", (int id, string type, string? name, DroneContext context) =>
+            bases.MapPost("/{id}/drones", (
+                int id,
+                string type,
+                string? name,
+                DroneContext context,
+                EventLog log) =>
             {
                 if (!context.Bases.WithDrones()
                         .TryFindBase(id, out var droneBase, out var notFound))
@@ -135,6 +142,9 @@ namespace Drones.Api
                 droneBase.ParkedDrones.Add(newDrone);
                 context.SaveChanges();
 
+                log.Add("built",
+                    $"{newDrone.Label} ({model.Name}) joined {droneBase.Name}");
+
                 return Results.Ok(newDrone);
             });
             bases.MapPut("/{id}/status", (int id, string status, DroneContext context) =>
@@ -173,7 +183,7 @@ namespace Drones.Api
 
                 return Results.Ok(droneBase);
             });
-            bases.MapDelete("/{id}", (int id, DroneContext context) =>
+            bases.MapDelete("/{id}", (int id, DroneContext context, EventLog log) =>
             {
                 if (!context.Bases.WithDrones()
                         .TryFindBase(id, out var droneBase, out var notFound))
@@ -200,6 +210,8 @@ namespace Drones.Api
                 context.Drones.RemoveRange(destroyed);
                 context.Bases.Remove(droneBase);
                 context.SaveChanges();
+
+                log.Add("base", $"Base {droneBase.Name} was decommissioned");
 
                 return Results.Ok(new
                 {

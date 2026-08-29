@@ -17,6 +17,10 @@ async function request(method, url, body) {
   return res.json();
 }
 
+export function fetchLog(after) {
+  return request("GET", `/api/log?after=${after}`);
+}
+
 export function fetchSimulationClock() {
   return request("GET", "/api/simulation/clock");
 }
