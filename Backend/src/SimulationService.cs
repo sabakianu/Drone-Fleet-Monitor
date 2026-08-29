@@ -101,7 +101,19 @@ namespace Drones
             foreach (var drone in affected)
             {
                 drone.BatteryLevel = Battery.Next(drone, elapsed);
+
+                if (drone.BatteryLevel <= 0 && drone.ParkedAtBaseId == null)
+                {
+                    Fall(context, drone);
+                }
             }
+        }
+
+        void Fall(DroneContext context, BaseDrone drone)
+        {
+            orders.Remove(drone.Id);
+
+            Move.Fall(drone, context.Bases.Include(b => b.ParkedDrones).ToList());
         }
     }
 }

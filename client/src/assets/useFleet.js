@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as api from "./api.js";
 import {
   spawnDrone,
@@ -22,6 +22,9 @@ export default function useFleet({ objectsRef, globeRef }) {
   const [drones, setDrones] = useState([]);
   const [selectedDrone, setSelectedDrone] = useState(null);
   const [selectedBase, setSelectedBase] = useState(null);
+
+  const selectedBaseRef = useRef(null);
+  selectedBaseRef.current = selectedBase;
 
   // sincronizează drona actualizată în panou, pe glob și în lista bazei
   const applyDroneUpdate = (updated) => {
@@ -103,8 +106,46 @@ export default function useFleet({ objectsRef, globeRef }) {
     );
 
     setDrones(drones);
+    await syncSelectedBase(drones, byId);
 
     return drones;
+  };
+
+  // dronele din panoul bazei sunt copii vechi: le inlocuim cu cele proaspete.
+  // daca s-a schimbat cine e parcat acolo, recitim baza intreaga (contoarele
+  // le calculeaza serverul)
+  const syncSelectedBase = async (drones, byId) => {
+    const base = selectedBaseRef.current;
+    if (!base) return;
+
+    const parkedNow = drones
+      .filter((drone) => drone.parkedAtBaseId === base.id)
+      .map((drone) => drone.id)
+      .sort()
+      .join();
+
+    const parkedBefore = (base.parkedDrones ?? [])
+      .map((drone) => drone.id)
+      .sort()
+      .join();
+
+    if (parkedNow !== parkedBefore) {
+      await refreshBases(base.id);
+      return;
+    }
+
+    const fresh = (list) =>
+      (list ?? []).map((drone) => byId.get(drone.id) ?? drone);
+
+    setSelectedBase((current) =>
+      current && current.id === base.id
+        ? {
+            ...current,
+            drones: fresh(current.drones),
+            parkedDrones: fresh(current.parkedDrones),
+          }
+        : current,
+    );
   };
 
   const toggleDroneStatus = async (drone) => {

@@ -5,6 +5,9 @@ import moveTargetIcon from "../Icons/MoveTarget.png";
 
 const DRONE_ALTITUDE = 0.05;
 
+const droneTint = (drone) =>
+  drone.status === "crashed" ? "#9ca3af" : "#ffffff";
+
 export function spawnDrone(globe, drone, objectsArray) {
   const textureLoader = new THREE.TextureLoader();
   const texture = textureLoader.load(droneIcon);
@@ -12,7 +15,7 @@ export function spawnDrone(globe, drone, objectsArray) {
   const material = new THREE.SpriteMaterial({
     map: texture,
     transparent: true,
-    color: "#ffffff",
+    color: droneTint(drone),
   });
 
   const sprite = new THREE.Sprite(material);
@@ -48,6 +51,7 @@ export function placeDroneSprite(globe, drone, objectsArray) {
     DRONE_ALTITUDE,
   );
   sprite.position.set(coords.x, coords.y, coords.z);
+  sprite.material.color.set(droneTint(drone));
   sprite.userData.drone = drone;
 
   return sprite;

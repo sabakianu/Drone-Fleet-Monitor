@@ -3,10 +3,16 @@ namespace Drones
 
     public static class Battery
     {
-        // calibrare in minute reale, la viteza 1 a simularii
         const double FlightMinutes = 4.0;    // pornita, in zbor
         const double IdleMinutes = 16.0;     // pornita, dar parcata in baza
         const double ChargeMinutes = 2.0;    // oprita si parcata
+
+        public static double? SecondsLeft(BaseDrone drone)
+        {
+            var rate = RatePerSimSecond(drone);
+
+            return rate < 0 ? drone.BatteryLevel / -rate : null;
+        }
 
         public static float Next(BaseDrone drone, double simSeconds) =>
             (float)Math.Clamp(

@@ -82,6 +82,17 @@ namespace Drones
         [NotMapped]
         public bool IsInBase => ParkedAtBaseId != null;
 
+        [NotMapped]
+        public double? BatterySecondsLeft => Battery.SecondsLeft(this);
+
+        [NotMapped]
+        public string? Activity =>
+            Status == "crashed" ? "crashed"
+            : CurrentSpeed.Horizontal > 0 || CurrentSpeed.Vertical > 0 ? "moving"
+            : Status == "online" ? "idle"
+            : IsInBase ? "charging"
+            : null;
+
         // parcată la o bază care nu e a ei
         [NotMapped]
         public bool IsVisiting => ParkedAtBaseId != null && ParkedAtBaseId != DroneBaseId;

@@ -10,6 +10,38 @@ namespace Drones
 
     public static class Move
     {
+        public const float MinimumFlightAltitude = 1f;
+
+        public const float SurvivableAltitude = 3f;
+
+        public const double LandingRadiusKm = 0.5;
+
+        public static bool SurvivesFall(Location location) =>
+            location.Altitude <= SurvivableAltitude;
+
+        public static void Fall(BaseDrone drone, IEnumerable<DroneBase> bases)
+        {
+            drone.CurrentSpeed.SetSpeed(0f, 0f);
+
+            var survives = SurvivesFall(drone.CurrentLocation);
+            drone.CurrentLocation.Altitude = 0f;
+
+            if (!survives)
+            {
+                drone.Status = "crashed";
+                return;
+            }
+
+            drone.Status = "offline";
+
+            var landingBase = bases.FirstOrDefault(b =>
+                !b.IsParkingFull
+                && Distance.BetweenKm(drone.CurrentLocation, b.CurrentLocation)
+                   <= LandingRadiusKm);
+
+            if (landingBase != null) drone.ParkedAtBaseId = landingBase.Id;
+        }
+
         const double ArrivalKm = 0.001;
         const float ArrivalMeters = 0.1f;
 

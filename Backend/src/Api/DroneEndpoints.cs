@@ -64,7 +64,11 @@ namespace Drones.Api
 
                 return Results.Ok(newDrone);
             });
-            drones.MapPut("/{id}/status", (int id, string status, DroneContext context) =>
+            drones.MapPut("/{id}/status", (
+                int id,
+                string status,
+                DroneContext context,
+                MoveOrders orders) =>
             {
                 var drone = context.Drones
                     .Include(d => d.HomeBase)
@@ -75,12 +79,34 @@ namespace Drones.Api
                     return Results.NotFound($"Drona cu ID-ul {id} nu a fost găsită.");
                 }
 
+                if (drone.Status == "crashed")
+                {
+                    return Results.BadRequest("Drona e avariată și nu mai poate fi pornită.");
+                }
+
                 if (status.ToLower() != "online" && status.ToLower() != "offline")
                 {
                     return Results.BadRequest("Status invalid. Acceptate: online, offline.");
                 }
 
-                drone.Status = status.ToLower();
+                if (status.ToLower() == "online"
+                    && drone.BatteryLevel <= 0
+                    && drone.ParkedAtBaseId == null)
+                {
+                    return Results.BadRequest(
+                        "Drona nu are baterie și nu e într-o bază.");
+                }
+
+                if (status.ToLower() == "offline" && drone.ParkedAtBaseId == null)
+                {
+                    orders.Remove(id);
+                    Move.Fall(drone, context.Bases.Include(b => b.ParkedDrones).ToList());
+                }
+                else
+                {
+                    drone.Status = status.ToLower();
+                }
+
                 context.SaveChanges();
 
                 return Results.Ok(drone);
@@ -123,15 +149,26 @@ namespace Drones.Api
                     return Results.NotFound($"Drona cu ID-ul {id} nu a fost găsită.");
                 }
 
+                if (drone.Status == "crashed")
+                {
+                    return Results.BadRequest("Drona e avariată și nu mai poate zbura.");
+                }
+
+                if (drone.BatteryLevel <= 0)
+                {
+                    return Results.BadRequest("Drona nu are baterie.");
+                }
+
                 if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180)
                 {
                     return Results.BadRequest("Coordonatele sunt în afara intervalului.");
                 }
 
-                if (altitude < 0 || altitude > drone.MaxAltitude)
+                if (altitude < Move.MinimumFlightAltitude || altitude > drone.MaxAltitude)
                 {
                     return Results.BadRequest(
-                        $"Altitudinea trebuie să fie între 0 și {drone.MaxAltitude} m.");
+                        $"Altitudinea de zbor trebuie să fie între "
+                        + $"{Move.MinimumFlightAltitude} și {drone.MaxAltitude} m.");
                 }
 
                 if (horizontalSpeed <= 0 || horizontalSpeed > drone.MaxHorizontalSpeed)
@@ -146,6 +183,9 @@ namespace Drones.Api
                         $"Viteza verticală trebuie să fie între 0 și {drone.MaxVerticalSpeed} m/s.");
                 }
 
+                // decoleaza: se porneste singura, iese din parcare si primeste
+                // vitezele alese
+                drone.Status = "online";
                 drone.ParkedAtBaseId = null;
                 drone.CurrentSpeed.SetSpeed(horizontalSpeed, verticalSpeed);
                 context.SaveChanges();

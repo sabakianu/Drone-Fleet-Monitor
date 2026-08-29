@@ -10,6 +10,8 @@ const number = (value) => (value.trim() === "" ? NaN : Number(value));
 
 const inRange = (value, min, max) => value >= min && value <= max;
 
+const MIN_ALTITUDE = 1;
+
 export default function MovePanel({
   drone,
   destination,
@@ -20,7 +22,7 @@ export default function MovePanel({
   const [latitude, setLatitude] = useState(destination.latitude.toFixed(4));
   const [longitude, setLongitude] = useState(destination.longitude.toFixed(4));
   const [altitude, setAltitude] = useState(
-    String(drone.currentLocation.altitude),
+    String(Math.max(MIN_ALTITUDE, drone.currentLocation.altitude)),
   );
   const [horizontalSpeed, setHorizontalSpeed] = useState(
     String(drone.maxHorizontalSpeed),
@@ -40,7 +42,7 @@ export default function MovePanel({
   const invalid = {
     latitude: !inRange(lat, -90, 90),
     longitude: !inRange(lon, -180, 180),
-    altitude: !inRange(alt, 0, drone.maxAltitude),
+    altitude: !inRange(alt, MIN_ALTITUDE, drone.maxAltitude),
     horizontalSpeed: !(speedH > 0 && speedH <= drone.maxHorizontalSpeed),
     verticalSpeed: !(speedV > 0 && speedV <= drone.maxVerticalSpeed),
   };
@@ -143,11 +145,11 @@ export default function MovePanel({
         <NumberField
           id="move-altitude"
           label="Altitude"
-          hint={`max ${drone.maxAltitude.toLocaleString("en-US")} m`}
+          hint={`${MIN_ALTITUDE}…${drone.maxAltitude.toLocaleString("en-US")} m`}
           unit="m"
           value={altitude}
           onChange={setAltitude}
-          min={0}
+          min={MIN_ALTITUDE}
           max={drone.maxAltitude}
           disabled={busy}
           invalid={invalid.altitude}
