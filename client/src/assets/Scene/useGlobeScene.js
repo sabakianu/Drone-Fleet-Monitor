@@ -18,13 +18,19 @@ export default function useGlobeScene({
   onSelectDrone,
   onSelectBase,
   onGlobeClick,
+  picking,
+  onCancelPick,
 }) {
   const mountRef = useRef(null);
 
-  // callbackurile prin ref: efectul ruleaza o singura data, dar apeleaza
-  // mereu ultima versiune primita
   const selectRef = useRef(null);
-  selectRef.current = { onSelectDrone, onSelectBase, onGlobeClick };
+  selectRef.current = {
+    onSelectDrone,
+    onSelectBase,
+    onGlobeClick,
+    picking,
+    onCancelPick,
+  };
 
   useEffect(() => {
     if (mountRef.current) {
@@ -46,8 +52,6 @@ export default function useGlobeScene({
     const controls = createControls(camera, renderer);
     const resizeManager = setupResize(camera, renderer);
 
-    // StrictMode monteaza efectul de doua ori: fetch-ul rulei vechi se poate
-    // termina dupa cleanup, asa ca nu-l mai lasam sa populeze scena curenta
     let disposed = false;
 
     const objects = objectsRef.current;
@@ -68,6 +72,8 @@ export default function useGlobeScene({
       {
         getGlobe: () => globeRef.current,
         onGeoClicked: (geo) => selectRef.current.onGlobeClick?.(geo),
+        isPicking: () => selectRef.current.picking,
+        onCancelPick: () => selectRef.current.onCancelPick?.(),
       },
     );
 
@@ -87,7 +93,6 @@ export default function useGlobeScene({
         setupGlobeRotation(globe, renderer);
         resizeManager.setGlobe(globe);
 
-        // dronele parcate în bază nu se randează pe glob
         droneList
           .filter((d) => !d.isInBase)
           .forEach((d) => spawnDrone(globe, d, objects));

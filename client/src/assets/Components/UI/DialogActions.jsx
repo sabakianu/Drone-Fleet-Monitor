@@ -8,9 +8,12 @@ export default function DialogActions({
   confirmDisabled = false,
   cancelLabel = "Cancel",
   confirmLabel = "OK",
+  extraAction,
 }) {
   return (
-    <div className="flex justify-end gap-3 mt-4">
+    <div className="flex items-center justify-end gap-3 mt-4">
+      {extraAction && <div className="mr-auto">{extraAction}</div>}
+
       <button
         type="button"
         onClick={onCancel}

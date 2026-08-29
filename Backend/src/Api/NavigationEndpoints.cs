@@ -33,12 +33,18 @@ namespace Drones.Api
                 var destination = new Location();
                 destination.SetLocation(latitude, longitude, altitude);
 
+                var parkable = Move.BaseInRange(
+                    destination,
+                    context.Bases.Include(b => b.ParkedDrones).ToList());
+
                 return Results.Ok(new
                 {
                     distanceKm = Distance.BetweenKm(drone.CurrentLocation, destination),
                     climbMeters = Distance.ClimbMeters(drone.CurrentLocation, destination),
                     travelSeconds = Distance.TravelSeconds(
                         drone.CurrentLocation, destination, horizontalSpeed, verticalSpeed),
+                    parkableBaseId = parkable?.Id,
+                    parkableBaseName = parkable?.Name,
                 });
             });
             drones.MapGet("/{id}/distances", (int id, DroneContext context) =>

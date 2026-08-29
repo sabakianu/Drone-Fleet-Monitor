@@ -87,6 +87,19 @@ namespace Drones
 
                 drone.CurrentSpeed.SetSpeed(0f, 0f);
                 orders.Remove(droneId);
+
+                if (plan.ParkAtBaseId != null)
+                {
+                    Park(context, drone, plan.ParkAtBaseId.Value);
+                }
+                else if (plan.Altitude <= 0)
+                {
+                    var landingBase = Move.BaseInRange(
+                        drone.CurrentLocation,
+                        context.Bases.Include(b => b.ParkedDrones).ToList());
+
+                    if (landingBase != null) Park(context, drone, landingBase.Id);
+                }
             }
         }
 
@@ -107,6 +120,19 @@ namespace Drones
                     Fall(context, drone);
                 }
             }
+        }
+
+        static void Park(DroneContext context, BaseDrone drone, int baseId)
+        {
+            var droneBase = context.Bases
+                .Include(b => b.ParkedDrones)
+                .FirstOrDefault(b => b.Id == baseId);
+
+            if (droneBase == null || droneBase.IsParkingFull) return;
+
+            drone.CurrentLocation.Altitude = 0f;
+            drone.ParkedAtBaseId = droneBase.Id;
+            drone.Status = "offline";
         }
 
         void Fall(DroneContext context, BaseDrone drone)

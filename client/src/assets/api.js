@@ -83,7 +83,15 @@ export function moveDrone(id, plan) {
     verticalSpeed: plan.verticalSpeed,
   });
 
+  if (plan.parkAtBaseId != null) {
+    query.set("parkAtBaseId", plan.parkAtBaseId);
+  }
+
   return request("PUT", `/api/drones/${id}/move?${query}`);
+}
+
+export function towDrone(id) {
+  return request("PUT", `/api/drones/${id}/tow`);
 }
 
 export function cancelDroneMove(id) {

@@ -203,6 +203,15 @@ export default function useFleet({ objectsRef, globeRef }) {
     await refreshBases(drone.droneBaseId, drone.parkedAtBaseId);
   };
 
+  const towDrone = async (drone) => {
+    const updated = await api.towDrone(drone.id);
+
+    applyDroneUpdate(updated);
+    removeDroneSprite(objectsRef.current, drone.id);
+
+    await refreshBases(drone.droneBaseId, drone.parkedAtBaseId);
+  };
+
   const cancelDroneMove = async (drone) => {
     applyDroneUpdate(await api.cancelDroneMove(drone.id));
   };
@@ -260,11 +269,13 @@ export default function useFleet({ objectsRef, globeRef }) {
     setSelectedDrone,
     selectedBase,
     setSelectedBase,
+    openBase: async (baseId) => setSelectedBase(await api.fetchBase(baseId)),
 
     toggleDroneStatus,
     renameDrone,
     moveDrone,
     cancelDroneMove,
+    towDrone,
     relocateDrone,
     destroyDrone,
 

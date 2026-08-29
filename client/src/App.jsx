@@ -32,6 +32,8 @@ export default function App() {
     onSelectDrone: fleet.setSelectedDrone,
     onSelectBase: fleet.setSelectedBase,
     onGlobeClick: dialogs.handleGlobeClick,
+    picking: dialogs.picking,
+    onCancelPick: dialogs.cancelPick,
   });
 
   useGlobeMarkers({
@@ -83,6 +85,8 @@ export default function App() {
           onMove={dialogs.startMove}
           onCenterLocation={centerOn}
           onChangeAltitude={dialogs.openChangeAltitude}
+          onTowBack={fleet.towDrone}
+          onOpenBase={fleet.openBase}
           onCancelOrder={
             dialogs.hasOrderFor(fleet.selectedDrone.id)
               ? () => dialogs.cancelOrder(fleet.selectedDrone)

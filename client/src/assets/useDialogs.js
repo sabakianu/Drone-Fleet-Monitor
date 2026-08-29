@@ -20,6 +20,7 @@ export default function useDialogs(fleet) {
   const [globeMarkers, setGlobeMarkers] = useState([]);
 
   const droneKey = (droneId) => `drone-${droneId}`;
+  const pendingKey = (droneId) => `pending-${droneId}`;
   const NEW_BASE_KEY = "new-base";
 
   const putMarker = (marker) =>
@@ -63,11 +64,12 @@ export default function useDialogs(fleet) {
   };
 
   // clickul pe glob inseamna altceva in functie de modul activ
+  // lista de baze, ca panoul de mutare sa recunoasca o tinta care e o baza
   const handleGlobeClick = (geo) => {
     if (moveTarget !== null) {
       setMovePlan({ drone: moveTarget, destination: geo });
       putMarker({
-        key: droneKey(moveTarget.id),
+        key: pendingKey(moveTarget.id),
         droneId: moveTarget.id,
         destination: geo,
         origin: null,
@@ -89,6 +91,8 @@ export default function useDialogs(fleet) {
     const origin = { ...drone.currentLocation };
 
     await fleet.moveDrone(drone, plan);
+
+    dropMarker(pendingKey(drone.id));
 
     // destinatia din plan, nu cea din click: poate fi editata din inputuri
     putMarker({
@@ -226,6 +230,14 @@ export default function useDialogs(fleet) {
 
     globeMarkers,
     handleGlobeClick,
+
+    // cat timp alegi un punct pe glob, clickul stanga anuleaza in loc sa selecteze
+    picking: moveTarget !== null || addingBase,
+    cancelPick: () => {
+      setMoveTarget(null);
+      setAddingBase(false);
+    },
+
     dropArrivedOrders,
     hasOrderFor: (droneId) =>
       globeMarkers.some((entry) => entry.key === droneKey(droneId)),
@@ -237,10 +249,7 @@ export default function useDialogs(fleet) {
 
     moveTarget,
     // replanificarea aceleiasi drone inlocuieste ordinul ei, nu pe ale altora
-    startMove: (drone) => {
-      dropMarker(droneKey(drone.id));
-      setMoveTarget(drone);
-    },
+    startMove: (drone) => setMoveTarget(drone),
     cancelMove: () => setMoveTarget(null),
 
     movePlan,
@@ -248,13 +257,13 @@ export default function useDialogs(fleet) {
     // tinta urmareste inputurile din panou, nu doar punctul din click
     updateMoveDestination: (geo) =>
       putMarker({
-        key: droneKey(movePlan.drone.id),
+        key: pendingKey(movePlan.drone.id),
         droneId: movePlan.drone.id,
         destination: geo,
         origin: null,
       }),
     closeMove: () => {
-      dropMarker(droneKey(movePlan.drone.id));
+      dropMarker(pendingKey(movePlan.drone.id));
       setMovePlan(null);
     },
 

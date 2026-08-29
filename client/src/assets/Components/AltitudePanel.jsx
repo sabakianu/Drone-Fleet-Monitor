@@ -7,11 +7,12 @@ import SpeedFields from "./UI/SpeedFields.jsx";
 
 const number = (value) => (value.trim() === "" ? NaN : Number(value));
 
-const MIN_ALTITUDE = 1;
+const MIN_ALTITUDE = 0;
+const DEFAULT_ALTITUDE = 1;
 
 export default function AltitudePanel({ drone, onCancel, onConfirm }) {
   const [altitude, setAltitude] = useState(
-    String(Math.max(MIN_ALTITUDE, drone.currentLocation.altitude)),
+    String(Math.max(DEFAULT_ALTITUDE, drone.currentLocation.altitude)),
   );
   const [horizontalSpeed, setHorizontalSpeed] = useState(
     String(drone.maxHorizontalSpeed),
@@ -68,7 +69,7 @@ export default function AltitudePanel({ drone, onCancel, onConfirm }) {
       <NumberField
         id="altitude-target"
         label="New altitude"
-        hint={`${MIN_ALTITUDE}…${drone.maxAltitude.toLocaleString("en-US")} m`}
+        hint={`0…${drone.maxAltitude.toLocaleString("en-US")} m`}
         unit="m"
         value={altitude}
         onChange={setAltitude}

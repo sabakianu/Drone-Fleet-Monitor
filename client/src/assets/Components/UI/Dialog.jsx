@@ -10,6 +10,7 @@ export default function Dialog({
   confirmDisabled = false,
   cancelLabel,
   confirmLabel,
+  extraAction,
   children,
 }) {
   useEffect(() => {
@@ -41,6 +42,7 @@ export default function Dialog({
           confirmDisabled={confirmDisabled}
           cancelLabel={cancelLabel}
           confirmLabel={confirmLabel}
+          extraAction={extraAction}
         />
       </form>
     </div>

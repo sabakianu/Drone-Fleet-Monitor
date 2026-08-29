@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import useAction from "../useAction.js";
 import { fetchDroneTrip } from "../api.js";
 import { formatDistance, formatDuration } from "../format.js";
+import ActionButton from "./UI/ActionButton.jsx";
 import Dialog from "./UI/Dialog.jsx";
 import NumberField from "./UI/NumberField.jsx";
 import SpeedFields from "./UI/SpeedFields.jsx";
@@ -10,7 +11,8 @@ const number = (value) => (value.trim() === "" ? NaN : Number(value));
 
 const inRange = (value, min, max) => value >= min && value <= max;
 
-const MIN_ALTITUDE = 1;
+const MIN_ALTITUDE = 0;
+const DEFAULT_ALTITUDE = 1;
 
 export default function MovePanel({
   drone,
@@ -22,7 +24,7 @@ export default function MovePanel({
   const [latitude, setLatitude] = useState(destination.latitude.toFixed(4));
   const [longitude, setLongitude] = useState(destination.longitude.toFixed(4));
   const [altitude, setAltitude] = useState(
-    String(Math.max(MIN_ALTITUDE, drone.currentLocation.altitude)),
+    String(Math.max(DEFAULT_ALTITUDE, drone.currentLocation.altitude)),
   );
   const [horizontalSpeed, setHorizontalSpeed] = useState(
     String(drone.maxHorizontalSpeed),
@@ -86,18 +88,25 @@ export default function MovePanel({
     return () => clearTimeout(timer);
   }, [drone.id, lat, lon, alt, speedH, speedV, hasErrors]);
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    if (hasErrors) return;
-
+  const submit = (extra) =>
     run(onConfirm, {
       latitude: lat,
       longitude: lon,
       altitude: alt,
       horizontalSpeed: speedH,
       verticalSpeed: speedV,
+      ...extra,
     });
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    if (hasErrors) return;
+
+    submit();
   };
+
+  const handlePark = () =>
+    submit({ altitude: 0, parkAtBaseId: trip.parkableBaseId });
 
   return (
     <Dialog
@@ -108,6 +117,19 @@ export default function MovePanel({
       error={error}
       confirmDisabled={hasErrors}
       confirmLabel="Move"
+      extraAction={
+        trip?.parkableBaseId != null && (
+          <ActionButton
+            variant="accent"
+            grow={false}
+            className="px-4"
+            onClick={handlePark}
+            disabled={busy || hasErrors}
+          >
+            Park at {trip.parkableBaseName}
+          </ActionButton>
+        )
+      }
     >
       <p className="text-sm text-slate-500 font-medium -mt-2 mb-4">
         {drone.name || `Drone #${drone.id}`} ·{" "}
@@ -145,7 +167,7 @@ export default function MovePanel({
         <NumberField
           id="move-altitude"
           label="Altitude"
-          hint={`${MIN_ALTITUDE}…${drone.maxAltitude.toLocaleString("en-US")} m`}
+          hint={`0…${drone.maxAltitude.toLocaleString("en-US")} m`}
           unit="m"
           value={altitude}
           onChange={setAltitude}

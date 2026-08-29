@@ -5,7 +5,8 @@ namespace Drones
         float Longitude,
         float Altitude,
         float HorizontalSpeed,
-        float VerticalSpeed
+        float VerticalSpeed,
+        int? ParkAtBaseId = null
     );
 
     public static class Move
@@ -14,10 +15,15 @@ namespace Drones
 
         public const float SurvivableAltitude = 3f;
 
-        public const double LandingRadiusKm = 0.5;
+        public const double LandingRadiusKm = 100.0;
 
         public static bool SurvivesFall(Location location) =>
             location.Altitude <= SurvivableAltitude;
+
+        public static DroneBase? BaseInRange(Location location, IEnumerable<DroneBase> bases) =>
+            bases.FirstOrDefault(b =>
+                !b.IsParkingFull
+                && Distance.BetweenKm(location, b.CurrentLocation) <= LandingRadiusKm);
 
         public static void Fall(BaseDrone drone, IEnumerable<DroneBase> bases)
         {
@@ -34,11 +40,7 @@ namespace Drones
 
             drone.Status = "offline";
 
-            var landingBase = bases.FirstOrDefault(b =>
-                !b.IsParkingFull
-                && Distance.BetweenKm(drone.CurrentLocation, b.CurrentLocation)
-                   <= LandingRadiusKm);
-
+            var landingBase = BaseInRange(drone.CurrentLocation, bases);
             if (landingBase != null) drone.ParkedAtBaseId = landingBase.Id;
         }
 
@@ -60,7 +62,13 @@ namespace Drones
         public static void Step(Location current, MovePlan plan, double simSeconds)
         {
             StepHorizontally(current, plan, simSeconds);
-            StepVertically(current, plan, simSeconds);
+
+            var arrived = Distance.BetweenKm(current, Destination(plan)) <= ArrivalKm;
+            var target = arrived
+                ? plan.Altitude
+                : Math.Max(plan.Altitude, MinimumFlightAltitude);
+
+            StepVertically(current, target, plan.VerticalSpeed, simSeconds);
         }
 
         static void StepHorizontally(Location current, MovePlan plan, double simSeconds)
@@ -86,20 +94,21 @@ namespace Drones
             Interpolate(current, plan, step / remaining);
         }
 
-        static void StepVertically(Location current, MovePlan plan, double simSeconds)
+        static void StepVertically(
+            Location current, float target, float verticalSpeed, double simSeconds)
         {
-            var remaining = plan.Altitude - current.Altitude;
+            var remaining = target - current.Altitude;
 
             if (Math.Abs(remaining) <= ArrivalMeters)
             {
-                current.Altitude = plan.Altitude;
+                current.Altitude = target;
                 return;
             }
 
-            var step = (float)(plan.VerticalSpeed * simSeconds);
+            var step = (float)(verticalSpeed * simSeconds);
 
             current.Altitude = Math.Abs(remaining) <= step
-                ? plan.Altitude
+                ? target
                 : current.Altitude + Math.Sign(remaining) * step;
         }
 

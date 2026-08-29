@@ -37,7 +37,9 @@ namespace Drones.Api
             });
             drones.MapGet("/{id}", (int id, DroneContext context) =>
             {
-                var drone = context.Drones.FirstOrDefault(d => d.Id == id);
+                var drone = context.Drones
+                    .Include(d => d.HomeBase)
+                    .FirstOrDefault(d => d.Id == id);
 
                 if (drone != null)
                 {
@@ -140,7 +142,8 @@ namespace Drones.Api
                 float horizontalSpeed,
                 float verticalSpeed,
                 DroneContext context,
-                MoveOrders orders) =>
+                MoveOrders orders,
+                int? parkAtBaseId = null) =>
             {
                 var drone = context.Drones.FirstOrDefault(d => d.Id == id);
 
@@ -164,11 +167,11 @@ namespace Drones.Api
                     return Results.BadRequest("Coordonatele sunt în afara intervalului.");
                 }
 
-                if (altitude < Move.MinimumFlightAltitude || altitude > drone.MaxAltitude)
+                // 0 e permis: zboara la minim si coboara abia la destinatie
+                if (altitude < 0 || altitude > drone.MaxAltitude)
                 {
                     return Results.BadRequest(
-                        $"Altitudinea de zbor trebuie să fie între "
-                        + $"{Move.MinimumFlightAltitude} și {drone.MaxAltitude} m.");
+                        $"Altitudinea trebuie să fie între 0 și {drone.MaxAltitude} m.");
                 }
 
                 if (horizontalSpeed <= 0 || horizontalSpeed > drone.MaxHorizontalSpeed)
@@ -191,7 +194,56 @@ namespace Drones.Api
                 context.SaveChanges();
 
                 orders.Set(id, new MovePlan(
-                    latitude, longitude, altitude, horizontalSpeed, verticalSpeed));
+                    latitude, longitude, altitude,
+                    horizontalSpeed, verticalSpeed, parkAtBaseId));
+
+                return Results.Ok(drone);
+            });
+
+            drones.MapPut("/{id}/tow", (int id, DroneContext context, MoveOrders orders) =>
+            {
+                var drone = context.Drones
+                    .Include(d => d.HomeBase)
+                    .FirstOrDefault(d => d.Id == id);
+
+                if (drone == null)
+                {
+                    return Results.NotFound($"Drona cu ID-ul {id} nu a fost găsită.");
+                }
+
+                if (drone.HomeBase == null)
+                {
+                    return Results.BadRequest("Drona nu aparține niciunei baze.");
+                }
+
+                if (drone.Status == "online")
+                {
+                    return Results.BadRequest("Oprește drona înainte de a o remorca.");
+                }
+
+                var homeBase = context.Bases
+                    .Include(b => b.ParkedDrones)
+                    .First(b => b.Id == drone.HomeBase.Id);
+
+                if (homeBase.IsParkingFull && drone.ParkedAtBaseId != homeBase.Id)
+                {
+                    return Results.BadRequest(
+                        $"Parcarea bazei {homeBase.Name} e plină "
+                        + $"({homeBase.ParkedCount}/{homeBase.MaxParkingCapacity}).");
+                }
+
+                orders.Remove(id);
+
+                drone.CurrentLocation.SetLocation(
+                    homeBase.CurrentLocation.Latitude,
+                    homeBase.CurrentLocation.Longitude,
+                    0f);
+                drone.CurrentSpeed.SetSpeed(0f, 0f);
+                drone.ParkedAtBaseId = homeBase.Id;
+
+                if (drone.Status != "crashed") drone.Status = "offline";
+
+                context.SaveChanges();
 
                 return Results.Ok(drone);
             });

@@ -74,6 +74,9 @@ namespace Drones
         [JsonIgnore]
         public DroneBase? HomeBase { get; set; }
 
+        [NotMapped]
+        public string? HomeBaseName => HomeBase?.Name;
+
         public int? ParkedAtBaseId { get; set; }
 
         [JsonIgnore]

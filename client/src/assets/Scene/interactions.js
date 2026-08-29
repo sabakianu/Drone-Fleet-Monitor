@@ -53,13 +53,11 @@ export function setupClick(
   onObjectClicked,
   globeClick = {},
 ) {
-  const { getGlobe, onGeoClicked } = globeClick;
+  const { getGlobe, onGeoClicked, isPicking, onCancelPick } = globeClick;
 
   const raycaster = new THREE.Raycaster();
   const mouse = new THREE.Vector2();
 
-  // rotirea globului se face prin drag, iar dragul se termina cu un click:
-  // retinem de unde a plecat, ca sa nu confundam o rotire cu o alegere
   let downX = 0;
   let downY = 0;
 
@@ -68,31 +66,43 @@ export function setupClick(
     downY = event.clientY;
   };
 
-  const handleClick = (event) => {
+  const dragged = (event) =>
+    Math.hypot(event.clientX - downX, event.clientY - downY) >
+    DRAG_TOLERANCE_PX;
+
+  const aimAt = (event) => {
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
     raycaster.setFromCamera(mouse, camera);
+  };
 
-    const intersects = raycaster.intersectObjects(activeObjects, true);
-
-    if (intersects.length > 0) {
-      onObjectClicked(intersects[0].object);
+  const handleClick = (event) => {
+    if (isPicking?.()) {
+      if (!dragged(event)) onCancelPick?.();
       return;
     }
+
+    aimAt(event);
+
+    const intersects = raycaster.intersectObjects(activeObjects, true);
+    if (intersects.length > 0) onObjectClicked(intersects[0].object);
+  };
+
+  const handleContextMenu = (event) => {
+    if (!isPicking?.()) return;
+
+    event.preventDefault();
+    if (dragged(event)) return;
 
     const globe = getGlobe?.();
     if (!globe || !onGeoClicked) return;
 
-    const dragged =
-      Math.hypot(event.clientX - downX, event.clientY - downY) >
-      DRAG_TOLERANCE_PX;
-    if (dragged) return;
+    aimAt(event);
 
     const hit = raycaster.intersectObject(globe, true)[0];
     if (!hit) return;
 
-    // globul e rotit, deci punctul din scena trebuie adus in spatiul lui
     const local = globe.worldToLocal(hit.point.clone());
     const { lat, lng } = globe.toGeoCoords(local);
 
@@ -101,11 +111,13 @@ export function setupClick(
 
   renderer.domElement.addEventListener("pointerdown", handlePointerDown);
   renderer.domElement.addEventListener("click", handleClick);
+  renderer.domElement.addEventListener("contextmenu", handleContextMenu);
 
   return {
     cleanup: () => {
       renderer.domElement.removeEventListener("pointerdown", handlePointerDown);
       renderer.domElement.removeEventListener("click", handleClick);
+      renderer.domElement.removeEventListener("contextmenu", handleContextMenu);
     },
   };
 }

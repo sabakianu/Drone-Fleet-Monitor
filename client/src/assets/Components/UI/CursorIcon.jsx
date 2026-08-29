@@ -19,18 +19,11 @@ export default function CursorIcon({
 
     const handleKey = (event) => event.key === "Escape" && cancelRef.current();
 
-    const handleContextMenu = (event) => {
-      event.preventDefault();
-      cancelRef.current();
-    };
-
     window.addEventListener("keydown", handleKey);
-    window.addEventListener("contextmenu", handleContextMenu);
 
     return () => {
       style.remove();
       window.removeEventListener("keydown", handleKey);
-      window.removeEventListener("contextmenu", handleContextMenu);
     };
   }, [cursor, scope]);
 

@@ -15,6 +15,8 @@ export default function DronePanel({
   onToggleStatus,
   onMove,
   onCancelOrder,
+  onTowBack,
+  onOpenBase,
   onCenterLocation,
   onChangeAltitude,
   onDestroy,
@@ -28,6 +30,12 @@ export default function DronePanel({
   const wrecked = drone.status === "crashed";
 
   const grounded = wrecked || drone.batteryLevel <= 0;
+
+  const stranded =
+    drone.droneBaseId !== null &&
+    drone.status === "offline" &&
+    !drone.isInBase &&
+    drone.currentLocation.altitude <= 0;
 
   const cannotPowerOn =
     wrecked ||
@@ -44,16 +52,29 @@ export default function DronePanel({
       imageAlt={drone.model}
       caption={`${drone.category} ${drone.kind} Drone`}
       headerAction={
-        onCancelOrder && (
-          <ActionButton
-            variant="danger"
-            size="small"
-            grow={false}
-            onClick={onCancelOrder}
-          >
-            Cancel Order
-          </ActionButton>
-        )
+        <>
+          {stranded && (
+            <ActionButton
+              variant="dark"
+              size="small"
+              grow={false}
+              onClick={() => run(onTowBack, drone)}
+              disabled={busy}
+            >
+              Tow back
+            </ActionButton>
+          )}
+          {onCancelOrder && (
+            <ActionButton
+              variant="danger"
+              size="small"
+              grow={false}
+              onClick={onCancelOrder}
+            >
+              Cancel Order
+            </ActionButton>
+          )}
+        </>
       }
       onClose={onClose}
     >
@@ -146,6 +167,22 @@ export default function DronePanel({
           </div>
         </div>
       </div>
+
+      {/* baza de care apartine */}
+      {drone.droneBaseId !== null && (
+        <div className="mb-4">
+          <h3 className="text-sm font-semibold text-slate-700">
+            Home base:{" "}
+            <button
+              type="button"
+              onClick={() => onOpenBase(drone.droneBaseId)}
+              className="font-bold text-accent-deep hover:underline"
+            >
+              {drone.homeBaseName ?? `Base #${drone.droneBaseId}`}
+            </button>
+          </h3>
+        </div>
+      )}
 
       {/* status */}
       <div className="mb-4">
